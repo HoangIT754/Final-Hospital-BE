@@ -41,4 +41,10 @@ public class PatientProfile extends AuditModel{
 
     @Column(name = "allergies")
     String allergies; // Dị ứng (thuốc, thức ăn...)
+
+    @ManyToOne
+    @JoinColumn(name = "status_id")
+    @NotNull
+    PatientStatus status; // Trạng thái hiện tại của bệnh nhân
+
 }
