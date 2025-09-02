@@ -1,13 +1,16 @@
 package com.hospital.backend.service;
 
 import com.hospital.backend.dto.request.patient.PatientRequest;
+import com.hospital.backend.dto.request.patient.PatientSearchRequest;
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.dto.response.BaseResponseList;
 import com.hospital.backend.entity.PatientProfile;
+import com.hospital.backend.entity.PatientStatus;
 import com.hospital.backend.entity.User;
 import com.hospital.backend.exception.BadRequestException;
 import com.hospital.backend.exception.NotFoundException;
 import com.hospital.backend.repository.PatientProfileRepository;
+import com.hospital.backend.repository.PatientStatusRepository;
 import com.hospital.backend.repository.UserRepository;
 import com.hospital.backend.utils.DateUtils;
 import com.hospital.backend.utils.ResponseUtils;
@@ -16,8 +19,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.List;
+import java.time.LocalDate;
+import java.time.Period;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +36,7 @@ public class PatientService {
 
     private final PatientProfileRepository patientProfileRepository;
     private final UserRepository userRepository;
+    private final PatientStatusRepository patientStatusRepository;
 
     /**
      * Create Patient
@@ -80,6 +86,86 @@ public class PatientService {
 
             return ResponseUtils.buildSuccessRes(
                     new BaseResponseList(patients, patients.size()) ,
+                    "Fetched Patients Successfully"
+            );
+        } catch (Exception e) {
+            return new BaseResponse(
+                    500, null, SYSTEM_ERROR, FAILED, 1, OPERATION_FAILED,
+                    DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
+            );
+        }
+    }
+
+    public BaseResponse getPatientCountByStatus() {
+        log.info("Started counting patients by status");
+        long beginTime = System.currentTimeMillis();
+
+        try {
+            List<Object[]> results = patientProfileRepository.countPatientsGroupByStatus();
+            Map<String, Long> responseData = new HashMap<>();
+
+            for (Object[] row : results) {
+                UUID statusId = (UUID) row[0];
+                Long count = (Long) row[1];
+
+                PatientStatus status = patientStatusRepository.findById(statusId).orElse(null);
+                if (status != null) {
+                    responseData.put(status.getCode(), count);
+                }
+            }
+
+            log.info("End counting patients in {} ms", System.currentTimeMillis() - beginTime);
+            return ResponseUtils.buildSuccessRes(responseData, "Fetched patient count by status successfully");
+        } catch (Exception e) {
+            log.error("Error while counting patients: {}", e.getMessage(), e);
+            return new BaseResponse(
+                    500, null, SYSTEM_ERROR, FAILED, 1, "Operation failed",
+                    DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
+            );
+        }
+    }
+
+    /**
+     * Search Patients with filters
+     */
+    public BaseResponse searchPatients(PatientSearchRequest request) {
+        try {
+            String firstName = request.getFirstName();
+            String lastName = request.getLastName();
+
+            if (firstName != null && !firstName.isBlank()) {
+                firstName = "%" + firstName.toLowerCase() + "%";
+            }
+            if (lastName != null && !lastName.isBlank()) {
+                lastName = "%" + lastName.toLowerCase() + "%";
+            }
+
+            List<PatientProfile> patients = patientProfileRepository.searchPatients(
+                    firstName,
+                    lastName,
+                    request.getIdentityNumber(),
+                    request.getPhoneNumber(),
+                    request.getGender(),
+                    request.getStatus()
+            );
+
+            // Nếu có filter theo tuổi
+            if (request.getAges() != null && !request.getAges().isEmpty()) {
+                Set<Integer> ageSet = request.getAges().stream()
+                        .map(Integer::parseInt)
+                        .collect(Collectors.toSet());
+
+                patients = patients.stream()
+                        .filter(p -> {
+                            if (p.getUser() == null || p.getUser().getDateOfBirth() == null) return false;
+                            int age = DateUtils.calculateAge(p.getUser().getDateOfBirth());
+                            return ageSet.contains(age);
+                        })
+                        .toList();
+            }
+
+            return ResponseUtils.buildSuccessRes(
+                    new BaseResponseList(patients, patients.size()),
                     "Fetched Patients Successfully"
             );
         } catch (Exception e) {

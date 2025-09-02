@@ -26,6 +26,8 @@ public class APIConstants {
     public static final String API_PATIENT = API_VERSION + "/patient";
     public static final String API_CREATE_PATIENT = API_PATIENT + "/create-patient";
     public static final String API_GET_ALL_PATIENT = API_PATIENT + "/get-all-patient";
+    public static final String API_GET_PATIENT_COUNT_BY_STATUS = API_PATIENT + "/count-by-status";
+    public static final String API_SEARCH_PATIENT = API_PATIENT + "/search";
 
     // Appointment api
     public static final String API_APPOINTMENT = API_VERSION + "/appointments";

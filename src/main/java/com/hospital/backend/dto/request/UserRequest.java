@@ -34,7 +34,7 @@ public class UserRequest {
     private String address; // địa chỉ
 
     @NotNull(message = "Phone number is required")
-    private Long phoneNumber; // số điện thoại (chỉnh sửa tên đúng chính tả)
+    private String phoneNumber; // số điện thoại (chỉnh sửa tên đúng chính tả)
 
     private LocalDate dateOfBirth; // ngày sinh
 

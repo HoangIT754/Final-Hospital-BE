@@ -14,7 +14,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "patient_profile")
-public class PatientProfile extends AuditModel{
+public class PatientProfile extends AuditModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -23,7 +23,7 @@ public class PatientProfile extends AuditModel{
     UUID id; // Id của hồ sơ bệnh nhân
 
     @OneToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     @NotNull
     User user; // Tham chiếu đến user (tài khoản đăng nhập)
 
@@ -46,5 +46,4 @@ public class PatientProfile extends AuditModel{
     @JoinColumn(name = "status_id")
     @NotNull
     PatientStatus status; // Trạng thái hiện tại của bệnh nhân
-
 }

@@ -69,4 +69,9 @@ public class DateUtils {
         ZonedDateTime zdt = instant.atZone(ZoneId.systemDefault());
         return zdt.format(formatter);
     }
+
+    public static int calculateAge(LocalDate birthDate) {
+        if (birthDate == null) return 0;
+        return Period.between(birthDate, LocalDate.now()).getYears();
+    }
 }

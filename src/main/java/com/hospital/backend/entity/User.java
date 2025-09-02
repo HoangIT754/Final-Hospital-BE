@@ -43,8 +43,8 @@ public class User extends AuditModel {
     @Column(name = "address")
     String address; // địa chỉ của user
 
-    @Column(name = "phone_nunmber")
-    long phoneNumber; // số điện thoại của user
+    @Column(name = "phone_number", length = 20)
+    String phoneNumber; // số điện thoại của user
 
     @Column(name = "date_of_birth")
     LocalDate dateOfBirth; // ngày tháng năm sinh của user

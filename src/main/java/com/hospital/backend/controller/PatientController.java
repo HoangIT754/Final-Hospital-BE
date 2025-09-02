@@ -2,6 +2,7 @@ package com.hospital.backend.controller;
 
 import com.hospital.backend.constant.APIConstants;
 import com.hospital.backend.dto.request.patient.PatientRequest;
+import com.hospital.backend.dto.request.patient.PatientSearchRequest;
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.service.PatientService;
 import org.springframework.http.ResponseEntity;
@@ -34,4 +35,21 @@ public class PatientController {
         response.setTook(System.currentTimeMillis() - beginTime);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
+
+    @PostMapping(value = APIConstants.API_GET_PATIENT_COUNT_BY_STATUS)
+    public ResponseEntity<BaseResponse> getPatientCountByStatus() {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = patientService.getPatientCountByStatus();
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    @PostMapping(value = APIConstants.API_SEARCH_PATIENT)
+    public ResponseEntity<BaseResponse> searchPatients(@RequestBody PatientSearchRequest request) {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = patientService.searchPatients(request);
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
 }
