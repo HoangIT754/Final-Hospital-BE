@@ -1,23 +1,26 @@
 package com.hospital.backend.dto.request.doctor;
 
-import jakarta.validation.constraints.NotNull;
+import com.hospital.backend.constant.GenderEnum;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Getter
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class DoctorProfileRequest {
-    @NotNull
-    UUID userId; // Id của user liên kết với doctor
-
-    String specialty; // Chuyên khoa
-
-    String description; // Mô tả chi tiết về bác sĩ
-
-    String workSchedule; // Lịch làm việc
+    private UUID userId;
+    private String firstName;
+    private String lastName;
+    private LocalDate dateOfBirth;
+    private GenderEnum gender;
+    private String address;
+    private String phoneNumber;
+    private UUID specialtyId;
+    private String description;
+    private UUID workScheduleId;
 }

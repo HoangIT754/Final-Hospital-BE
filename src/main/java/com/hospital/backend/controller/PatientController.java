@@ -52,4 +52,12 @@ public class PatientController {
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
+    @PostMapping(value = APIConstants.API_GET_PATIENT_STATUS)
+    public ResponseEntity<BaseResponse> getAllPatientStatus() {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = patientService.getAllPatientStatus();
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
 }

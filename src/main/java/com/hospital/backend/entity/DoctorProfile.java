@@ -1,5 +1,6 @@
 package com.hospital.backend.entity;
 
+import com.hospital.backend.constant.GenderEnum;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -7,6 +8,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -27,13 +30,36 @@ public class DoctorProfile extends AuditModel{
     @NotNull
     User user; // Tham chiếu đến user (tài khoản đăng nhập)
 
-    @Column(name = "specialty")
-    String specialty; // Chuyên khoa (Nội, Ngoại, Tai Mũi Họng...)
+    @Column(name = "first_name", nullable = false)
+    String firstName; // tên của bác sĩ
+
+    @Column(name = "last_name", nullable = false)
+    String lastName; // họ của bác sĩ
+
+    @Column(name = "date_of_birth")
+    LocalDate dateOfBirth; // ngày tháng năm sinh
+
+    @Column(name = "gender")
+    GenderEnum gender; // giới tính
+
+    @Column(name = "address")
+    String address; // địa chỉ của bác sĩ
+
+    @Column(name = "phone_number", length = 20)
+    String phoneNumber; // số điện thoại của bác sĩ
+
+    @ManyToOne
+    @JoinColumn(name = "specialty_id", nullable = false)
+    Specialty specialty; // Chuyên khoa (Nội, Ngoại, Tai Mũi Họng...)
 
     @Column(name = "description")
     String description; // Mô tả chi tiết về bác sĩ
 
-    @Column(name = "work_schedule")
-    String workSchedule; // Lịch làm việc cơ bản (ví dụ: T2-T6, 8h-17h)
+    @OneToOne
+    @JoinColumn(name = "work_schedule_id")
+    private WorkSchedule workSchedule; // Lịch làm việc cơ bản (ví dụ: T2-T6, 8h-17h)
+
+    @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Appointment> appointments;
 }
 

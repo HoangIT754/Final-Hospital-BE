@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -23,11 +25,28 @@ public class PatientProfile extends AuditModel {
     UUID id; // Id của hồ sơ bệnh nhân
 
     @OneToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    @NotNull
-    User user; // Tham chiếu đến user (tài khoản đăng nhập)
+    @JoinColumn(name = "user_id")
+    User user; // Tham chiếu đến user (tài khoản đăng nhập) - có thể null nếu bệnh nhân chưa có account
 
-    @Column(name = "identity_number")
+    @Column(name = "first_name", nullable = false)
+    String firstName; // tên của bệnh nhân
+
+    @Column(name = "last_name", nullable = false)
+    String lastName; // họ của bệnh nhân
+
+    @Column(name = "date_of_birth")
+    LocalDate dateOfBirth; // ngày tháng năm sinh
+
+    @Column(name = "gender")
+    String gender; // giới tính
+
+    @Column(name = "address")
+    String address; // địa chỉ của bệnh nhân
+
+    @Column(name = "phone_number", length = 20)
+    String phoneNumber; // số điện thoại của bệnh nhân
+
+    @Column(name = "identity_number", unique = true)
     String identityNumber; // Số CCCD / CMND của bệnh nhân
 
     @Column(name = "health_insurance_number")
@@ -43,7 +62,9 @@ public class PatientProfile extends AuditModel {
     String allergies; // Dị ứng (thuốc, thức ăn...)
 
     @ManyToOne
-    @JoinColumn(name = "status_id")
-    @NotNull
+    @JoinColumn(name = "status_id", nullable = false)
     PatientStatus status; // Trạng thái hiện tại của bệnh nhân
+
+    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Appointment> appointments;
 }

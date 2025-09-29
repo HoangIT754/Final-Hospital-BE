@@ -1,23 +1,31 @@
 package com.hospital.backend.service;
 
 import com.hospital.backend.dto.request.appointment.AppointmentRequest;
+import com.hospital.backend.dto.response.BaseResponse;
+import com.hospital.backend.dto.response.BaseResponseList;
 import com.hospital.backend.entity.Appointment;
 import com.hospital.backend.entity.DoctorProfile;
 import com.hospital.backend.entity.PatientProfile;
 import com.hospital.backend.repository.AppointmentRepository;
 import com.hospital.backend.repository.DoctorProfileRepository;
 import com.hospital.backend.repository.PatientProfileRepository;
+import com.hospital.backend.utils.DateUtils;
+import com.hospital.backend.utils.ResponseUtils;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Transactional
+@Slf4j
 public class AppointmentService {
+
+    private static final String FAILED = "failed";
+    private static final String SUCCESS = "Success";
+    private static final String SYSTEM_ERROR = "Error systems";
+    private static final String OPERATION_FAILED = "Operation failed";
 
     private final AppointmentRepository appointmentRepository;
     private final PatientProfileRepository patientProfileRepository;
@@ -56,9 +64,24 @@ public class AppointmentService {
         return appointmentRepository.save(appointment);
     }
 
-    public List<Appointment> getAll() {
-        List<Appointment> appointments = appointmentRepository.findAll();
-        return appointments != null ? appointments : Collections.emptyList();
+    public BaseResponse getAllAppointments() {
+        log.info("Started fetching all appointments");
+        long beginTime = System.currentTimeMillis();
+
+        try {
+            List<Appointment> patients = appointmentRepository.findAll();
+            log.info("End fetching appointments in {} ms", System.currentTimeMillis() - beginTime);
+
+            return ResponseUtils.buildSuccessRes(
+                    new BaseResponseList(patients, patients.size()) ,
+                    "Fetched Appointments Successfully"
+            );
+        } catch (Exception e) {
+            return new BaseResponse(
+                    500, null, SYSTEM_ERROR, FAILED, 1, OPERATION_FAILED,
+                    DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
+            );
+        }
     }
 
     public Optional<Appointment> getById(UUID id) {

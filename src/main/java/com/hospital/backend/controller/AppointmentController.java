@@ -2,6 +2,7 @@ package com.hospital.backend.controller;
 
 import com.hospital.backend.constant.APIConstants;
 import com.hospital.backend.dto.request.appointment.AppointmentRequest;
+import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.entity.Appointment;
 import com.hospital.backend.service.AppointmentService;
 import org.springframework.http.ResponseEntity;
@@ -26,9 +27,13 @@ public class AppointmentController {
 
     // POST: Get all appointments
     @PostMapping(value = APIConstants.API_APPOINTMENT_GET_ALL)
-    public ResponseEntity<List<Appointment>> getAll() {
-        return ResponseEntity.ok(appointmentService.getAll());
+    public ResponseEntity<BaseResponse> getAllAppointments() {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = appointmentService.getAllAppointments();
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
     }
+
 
     // POST: Get appointment by id
     @PostMapping(value = APIConstants.API_APPOINTMENT_GET_DETAILS)

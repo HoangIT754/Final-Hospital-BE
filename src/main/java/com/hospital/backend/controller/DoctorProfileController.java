@@ -2,6 +2,8 @@ package com.hospital.backend.controller;
 
 import com.hospital.backend.constant.APIConstants;
 import com.hospital.backend.dto.request.doctor.DoctorProfileRequest;
+import com.hospital.backend.dto.request.patient.PatientRequest;
+import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.entity.DoctorProfile;
 import com.hospital.backend.service.DoctorProfileService;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +23,11 @@ public class DoctorProfileController {
     }
 
     @PostMapping(value = APIConstants.API_CREATE_DOCTOR)
-    public ResponseEntity<DoctorProfile> createDoctorProfile(@RequestBody DoctorProfileRequest request) {
-        DoctorProfile doctorProfile = doctorProfileService.createDoctorProfile(request);
-        return ResponseEntity.ok(doctorProfile);
+    public ResponseEntity<BaseResponse> createPatient(@RequestBody DoctorProfileRequest request) {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = doctorProfileService.createDoctor(request);
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @PostMapping(value = APIConstants.API_GET_ALL_DOCTOR)

@@ -28,6 +28,7 @@ public class APIConstants {
     public static final String API_GET_ALL_PATIENT = API_PATIENT + "/get-all-patient";
     public static final String API_GET_PATIENT_COUNT_BY_STATUS = API_PATIENT + "/count-by-status";
     public static final String API_SEARCH_PATIENT = API_PATIENT + "/search";
+    public static final String API_GET_PATIENT_STATUS = API_PATIENT + "/get-patient-status";
 
     // Appointment api
     public static final String API_APPOINTMENT = API_VERSION + "/appointments";
@@ -69,4 +70,16 @@ public class APIConstants {
     public static final String API_GET_LAB_TEST_BY_ID = API_LAB_TEST + "/get";
     public static final String API_GET_ALL_LAB_TESTS = API_LAB_TEST + "/get-all";
 
+    // Specialty api
+    public static final String API_SPECIALTY = API_VERSION + "/specialty";
+    public static final String API_CREATE_SPECIALTY = API_SPECIALTY + "/create";
+
+    // Role api
+    public static final String API_ROLE = API_VERSION + "/role";
+    public static final String API_CREATE_ROLE = API_ROLE + "/create";
+    public static final String API_GET_ALL_ROLES = API_ROLE + "/get-all";
+
+    // Work Schedule api
+    public static final String API_WORK_SCHEDULE = API_VERSION + "/work-schedule";
+    public static final String API_WORK_SCHEDULE_CREATE = API_WORK_SCHEDULE + "/create";
 }

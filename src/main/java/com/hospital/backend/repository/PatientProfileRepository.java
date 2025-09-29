@@ -20,15 +20,13 @@ public interface PatientProfileRepository extends JpaRepository<PatientProfile, 
     List<Object[]> countPatientsGroupByStatus();
 
     @Query("""
-    SELECT p FROM PatientProfile p
-    JOIN p.user u
-    JOIN p.status s
-    WHERE (:firstName IS NULL OR LOWER(u.firstName) LIKE :firstName)
-      AND (:lastName IS NULL OR LOWER(u.lastName) LIKE :lastName)
-      AND (:identityNumber IS NULL OR p.identityNumber = :identityNumber)
-      AND (:phoneNumber IS NULL OR u.phoneNumber = :phoneNumber)
-      AND (:gender IS NULL OR u.gender = :gender)
-      AND (:status IS NULL OR s.code = :status)
+        SELECT p FROM PatientProfile p
+        WHERE (:firstName IS NULL OR LOWER(p.firstName) LIKE :firstName)
+          AND (:lastName IS NULL OR LOWER(p.lastName) LIKE :lastName)
+          AND (:identityNumber IS NULL OR p.identityNumber = :identityNumber)
+          AND (:phoneNumber IS NULL OR p.phoneNumber = :phoneNumber)
+          AND (:gender IS NULL OR p.gender = :gender)
+          AND (:status IS NULL OR p.status = :status)
     """)
     List<PatientProfile> searchPatients(
             @Param("firstName") String firstName,

@@ -60,8 +60,6 @@ public final class Constants {
     public static final String ERROR_NO_DATA = "No data";
     public static final String MESSAGE_OPERATION_SUCCESSFUL = "Operation successful";
     public static final String BOOLEAN_FALSE = "false";
-    public static final String BASE_PACKAGE_INTERPAY = "vn.acb.ttqt.ws4api.entity.interpay";
-    public static final String BASE_PACKAGE_WS4 = "vn.acb.ttqt.ws4api.entity.ws4";
 
     public static final String BEARER = "Bearer ";
     public static final String KQLC = "KQLC";

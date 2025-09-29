@@ -43,20 +43,35 @@ public class PatientService {
      */
     @Transactional
     public BaseResponse createPatient(PatientRequest request) {
-        log.info("Started creating Patient with request: {}", request);
         long beginTime = System.currentTimeMillis();
 
         try {
-            User user = userRepository.findById(request.getUserId())
-                    .orElseThrow(() -> new NotFoundException("User not found"));
-
             PatientProfile patient = new PatientProfile();
-            patient.setUser(user);
+
+            // Nếu có userId thì set, nếu không thì bỏ qua
+            if (request.getUserId() != null) {
+                User user = userRepository.findById(request.getUserId())
+                        .orElseThrow(() -> new NotFoundException("User not found"));
+                patient.setUser(user);
+            }
+
+            // Set các thông tin hồ sơ bệnh nhân
+            patient.setFirstName(request.getFirstName());
+            patient.setLastName(request.getLastName());
+            patient.setDateOfBirth(request.getDateOfBirth());
+            patient.setGender(request.getGender());
+            patient.setAddress(request.getAddress());
+            patient.setPhoneNumber(request.getPhoneNumber());
             patient.setIdentityNumber(request.getIdentityNumber());
             patient.setHealthInsuranceNumber(request.getHealthInsuranceNumber());
             patient.setEmergencyContact(request.getEmergencyContact());
             patient.setMedicalHistory(request.getMedicalHistory());
             patient.setAllergies(request.getAllergies());
+
+            // Trạng thái bệnh nhân (bắt buộc)
+            PatientStatus status = patientStatusRepository.findById(request.getStatusId())
+                    .orElseThrow(() -> new NotFoundException("Patient status not found"));
+            patient.setStatus(status);
 
             PatientProfile savedPatient = patientProfileRepository.save(patient);
 
@@ -66,12 +81,14 @@ public class PatientService {
             log.error("Validation error: {}", e.getMessage());
             throw e;
         } catch (Exception e) {
+            log.error("System error while creating patient", e);
             return new BaseResponse(
                     500, null, SYSTEM_ERROR, FAILED, 1, OPERATION_FAILED,
                     DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
             );
         }
     }
+
 
     /**
      * Get All Patients
@@ -157,8 +174,8 @@ public class PatientService {
 
                 patients = patients.stream()
                         .filter(p -> {
-                            if (p.getUser() == null || p.getUser().getDateOfBirth() == null) return false;
-                            int age = DateUtils.calculateAge(p.getUser().getDateOfBirth());
+                            if (p.getDateOfBirth() == null) return false;
+                            int age = DateUtils.calculateAge(p.getDateOfBirth());
                             return ageSet.contains(age);
                         })
                         .toList();
@@ -175,4 +192,27 @@ public class PatientService {
             );
         }
     }
+
+    public BaseResponse getAllPatientStatus() {
+        log.info("Started fetching all patient statuses");
+        long beginTime = System.currentTimeMillis();
+
+        try {
+            List<PatientStatus> statuses = patientStatusRepository.findAll();
+
+            log.info("End fetching patient statuses in {} ms", System.currentTimeMillis() - beginTime);
+
+            return ResponseUtils.buildSuccessRes(
+                    new BaseResponseList(statuses, statuses.size()),
+                    "Fetched Patient Statuses Successfully"
+            );
+        } catch (Exception e) {
+            log.error("Error while fetching patient statuses: {}", e.getMessage(), e);
+            return new BaseResponse(
+                    500, null, SYSTEM_ERROR, FAILED, 1, OPERATION_FAILED,
+                    DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
+            );
+        }
+    }
+
 }
