@@ -1,7 +1,7 @@
 package com.hospital.backend.controller;
 
 import com.hospital.backend.constant.APIConstants;
-import com.hospital.backend.dto.request.Role.RoleRequest;
+import com.hospital.backend.dto.request.role.RoleRequest;
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.service.RoleService;
 import org.springframework.http.ResponseEntity;

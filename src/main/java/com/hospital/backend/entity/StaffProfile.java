@@ -16,8 +16,8 @@ import java.util.UUID;
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "doctor_profile")
-public class DoctorProfile extends AuditModel{
+@Table(name = "staff_profile")
+public class StaffProfile extends AuditModel{
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -59,7 +59,18 @@ public class DoctorProfile extends AuditModel{
     @JoinColumn(name = "work_schedule_id")
     private WorkSchedule workSchedule; // Lịch làm việc cơ bản (ví dụ: T2-T6, 8h-17h)
 
-    @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "staff", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Appointment> appointments;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "availability_status")
+    private AvailabilityStatus availabilityStatus;
+
+    public enum AvailabilityStatus {
+        AVAILABLE, // Rảnh, có thể nhận ca
+        BUSY,      // Đang bận
+        OFFLINE    // Không trực tuyến
+    }
+
 }
 

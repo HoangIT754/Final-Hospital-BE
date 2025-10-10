@@ -1,8 +1,7 @@
 package com.hospital.backend.controller;
 
 import com.hospital.backend.constant.APIConstants;
-import com.hospital.backend.dto.request.Role.RoleRequest;
-import com.hospital.backend.dto.request.WorkSchedule.WorkScheduleRequest;
+import com.hospital.backend.dto.request.workSchedule.WorkScheduleRequest;
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.service.WorkScheduleService;
 import lombok.RequiredArgsConstructor;

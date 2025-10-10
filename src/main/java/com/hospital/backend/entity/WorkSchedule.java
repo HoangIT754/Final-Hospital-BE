@@ -13,15 +13,15 @@ import java.util.UUID;
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "doctor_work_schedule")
+@Table(name = "staff_work_schedule")
 public class WorkSchedule {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne
-    @JoinColumn(name = "doctor_id")
-    private DoctorProfile doctor;
+    @JoinColumn(name = "staff_id")
+    private StaffProfile staff;
 
     @Enumerated(EnumType.STRING)
     private DayOfWeek dayOfWeek; // (MONDAY, TUESDAY,...)

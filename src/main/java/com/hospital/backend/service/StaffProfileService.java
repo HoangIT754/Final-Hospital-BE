@@ -1,14 +1,14 @@
 package com.hospital.backend.service;
 
-import com.hospital.backend.dto.request.doctor.DoctorProfileRequest;
+import com.hospital.backend.dto.request.staff.StaffProfileRequest;
 import com.hospital.backend.dto.response.BaseResponse;
-import com.hospital.backend.entity.DoctorProfile;
+import com.hospital.backend.entity.StaffProfile;
 import com.hospital.backend.entity.Specialty;
 import com.hospital.backend.entity.User;
 import com.hospital.backend.entity.WorkSchedule;
 import com.hospital.backend.exception.BadRequestException;
 import com.hospital.backend.exception.NotFoundException;
-import com.hospital.backend.repository.DoctorProfileRepository;
+import com.hospital.backend.repository.StaffProfileRepository;
 import com.hospital.backend.repository.SpecialtyRepository;
 import com.hospital.backend.repository.UserRepository;
 import com.hospital.backend.repository.WorkScheduleRepository;
@@ -23,8 +23,8 @@ import java.util.List;
 
 @Service
 @Slf4j
-public class DoctorProfileService {
-    private final DoctorProfileRepository doctorProfileRepository;
+public class StaffProfileService {
+    private final StaffProfileRepository staffProfileRepository;
     private final UserRepository userRepository;
     private final SpecialtyRepository specialtyRepository;
 
@@ -34,52 +34,52 @@ public class DoctorProfileService {
     private static final String OPERATION_FAILED = "Operation failed";
     private final WorkScheduleRepository workScheduleRepository;
 
-    DoctorProfileService(DoctorProfileRepository doctorProfileRepository, UserRepository userRepository, SpecialtyRepository specialtyRepository, WorkScheduleRepository workScheduleRepository) {
-        this.doctorProfileRepository = doctorProfileRepository;
+    StaffProfileService(StaffProfileRepository staffProfileRepository, UserRepository userRepository, SpecialtyRepository specialtyRepository, WorkScheduleRepository workScheduleRepository) {
+        this.staffProfileRepository = staffProfileRepository;
         this.userRepository = userRepository;
         this.specialtyRepository = specialtyRepository;
         this.workScheduleRepository = workScheduleRepository;
     }
 
     /**
-     * Create Doctor
+     * Create Staff
      */
     @Transactional
-    public BaseResponse createDoctor(DoctorProfileRequest request) {
+    public BaseResponse createStaff(StaffProfileRequest request) {
         long beginTime = System.currentTimeMillis();
 
         try {
-            DoctorProfile doctor = new DoctorProfile();
+            StaffProfile staff = new StaffProfile();
 
             // Nếu có userId thì set, nếu không thì bỏ qua
             if (request.getUserId() != null) {
                 User user = userRepository.findById(request.getUserId())
                         .orElseThrow(() -> new NotFoundException("User not found"));
-                doctor.setUser(user);
+                staff.setUser(user);
             }
 
             // Set Specialty (bắt buộc)
             Specialty specialty = specialtyRepository.findById(request.getSpecialtyId())
                     .orElseThrow(() -> new NotFoundException("Specialty not found"));
-            doctor.setSpecialty(specialty);
+            staff.setSpecialty(specialty);
 
             // WorkSchedule (optional)
             if (request.getWorkScheduleId() != null) {
                 WorkSchedule workSchedule = workScheduleRepository.findById(request.getWorkScheduleId())
                         .orElseThrow(() -> new NotFoundException("Work schedule not found"));
-                doctor.setWorkSchedule(workSchedule);
+                staff.setWorkSchedule(workSchedule);
             }
 
             // Set các thông tin hồ sơ bác sĩ
-            doctor.setFirstName(request.getFirstName());
-            doctor.setLastName(request.getLastName());
-            doctor.setDateOfBirth(request.getDateOfBirth());
-            doctor.setGender(request.getGender());
-            doctor.setAddress(request.getAddress());
-            doctor.setPhoneNumber(request.getPhoneNumber());
-            doctor.setDescription(request.getDescription());
+            staff.setFirstName(request.getFirstName());
+            staff.setLastName(request.getLastName());
+            staff.setDateOfBirth(request.getDateOfBirth());
+            staff.setGender(request.getGender());
+            staff.setAddress(request.getAddress());
+            staff.setPhoneNumber(request.getPhoneNumber());
+            staff.setDescription(request.getDescription());
 
-            DoctorProfile savedDoctor = doctorProfileRepository.save(doctor);
+            StaffProfile savedDoctor = staffProfileRepository.save(staff);
 
             log.info("End create Doctor in {} ms", System.currentTimeMillis() - beginTime);
             return ResponseUtils.buildSuccessRes(savedDoctor, "Created Doctor Successfully");
@@ -95,7 +95,7 @@ public class DoctorProfileService {
         }
     }
 
-    public List<DoctorProfile> getAllDoctors() {
-        return doctorProfileRepository.findAll();
+    public List<StaffProfile> getAllStaffs() {
+        return staffProfileRepository.findAll();
     }
 }

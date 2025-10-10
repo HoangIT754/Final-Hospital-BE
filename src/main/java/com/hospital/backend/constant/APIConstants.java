@@ -17,10 +17,10 @@ public class APIConstants {
     public static final String API_USER = API_VERSION + "/user";
     public static final String API_CREATE_USER = API_USER + "/register";
 
-    // Doctor api
-    public static final String API_DOCTOR = API_USER + "/doctor";
-    public static final String API_CREATE_DOCTOR = API_DOCTOR + "/create-doctor";
-    public static final String API_GET_ALL_DOCTOR = API_DOCTOR + "/get-all-doctor";
+    // Staff api
+    public static final String API_STAFF = API_USER + "/staff";
+    public static final String API_CREATE_STAFF = API_STAFF + "/create-staff";
+    public static final String API_GET_ALL_STAFF = API_STAFF + "/get-all-staff";
 
     // Patient api
     public static final String API_PATIENT = API_VERSION + "/patient";
@@ -37,14 +37,6 @@ public class APIConstants {
     public static final String API_APPOINTMENT_GET_DETAILS = API_APPOINTMENT + "/get-appointment-details";
     public static final String API_APPOINTMENT_UPDATE = API_APPOINTMENT + "/update-appointment";
     public static final String API_APPOINTMENT_DELETE = API_APPOINTMENT + "/delete-appointment";
-
-    // Department api
-    public static final String API_DEPARTMENT = API_VERSION + "/department";
-    public static final String API_CREATE_DEPARTMENT = API_DEPARTMENT + "/create";
-    public static final String API_UPDATE_DEPARTMENT = API_DEPARTMENT + "/update";
-    public static final String API_DELETE_DEPARTMENT = API_DEPARTMENT + "/delete";
-    public static final String API_GET_DEPARTMENT_BY_ID = API_DEPARTMENT + "/get";
-    public static final String API_GET_ALL_DEPARTMENTS = API_DEPARTMENT + "/get-all";
 
     // Room api
     public static final String API_ROOM = API_VERSION + "/room";
@@ -82,4 +74,8 @@ public class APIConstants {
     // Work Schedule api
     public static final String API_WORK_SCHEDULE = API_VERSION + "/work-schedule";
     public static final String API_WORK_SCHEDULE_CREATE = API_WORK_SCHEDULE + "/create";
+
+    // Staff status api
+    public static final String API_STAFF_STATUS = API_VERSION + "/staff-status";
+    public static final String API_CREATE_STAFF_STATUS = API_STAFF_STATUS + "/create";
 }

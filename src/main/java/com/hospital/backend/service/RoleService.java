@@ -1,6 +1,6 @@
 package com.hospital.backend.service;
 
-import com.hospital.backend.dto.request.Role.RoleRequest;
+import com.hospital.backend.dto.request.role.RoleRequest;
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.dto.response.BaseResponseList;
 import com.hospital.backend.entity.Role;

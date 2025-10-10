@@ -8,13 +8,15 @@ import java.util.UUID;
 
 @Data
 public class RoomRequest {
+    private UUID id;
+
     @NotNull
     private String roomNo;
 
     @NotNull
     private Room.RoomType roomType;
 
-    private UUID departmentId;
+    private UUID specialtyId;
 
     private Integer floor;
 

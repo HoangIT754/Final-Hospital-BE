@@ -1,11 +1,11 @@
 package com.hospital.backend.service;
 
-import com.hospital.backend.dto.request.WorkSchedule.WorkScheduleRequest;
+import com.hospital.backend.dto.request.workSchedule.WorkScheduleRequest;
 import com.hospital.backend.dto.response.BaseResponse;
-import com.hospital.backend.entity.DoctorProfile;
+import com.hospital.backend.entity.StaffProfile;
 import com.hospital.backend.entity.WorkSchedule;
 import com.hospital.backend.exception.BadRequestException;
-import com.hospital.backend.repository.DoctorProfileRepository;
+import com.hospital.backend.repository.StaffProfileRepository;
 import com.hospital.backend.repository.WorkScheduleRepository;
 import com.hospital.backend.utils.DateUtils;
 import com.hospital.backend.utils.ResponseUtils;
@@ -25,7 +25,7 @@ public class WorkScheduleService {
     private static final String SUCCESS = "Success";
     private static final String SYSTEM_ERROR = "Error systems";
     private static final String OPERATION_FAILED = "Operation failed";
-    private final DoctorProfileRepository doctorProfileRepository;
+    private final StaffProfileRepository staffProfileRepository;
     private final WorkScheduleRepository workScheduleRepository;
 
     /**
@@ -36,13 +36,13 @@ public class WorkScheduleService {
         long beginTime = System.currentTimeMillis();
 
         try {
-            // check doctor
-            DoctorProfile doctor = doctorProfileRepository.findById(request.getDoctorId())
-                    .orElseThrow(() -> new BadRequestException("Doctor not found"));
+            // check staff
+            StaffProfile staff = staffProfileRepository.findById(request.getStaffId())
+                    .orElseThrow(() -> new BadRequestException("Staff not found"));
 
             // build entity
             WorkSchedule workSchedule = new WorkSchedule();
-            workSchedule.setDoctor(doctor);
+            workSchedule.setStaff(staff);
             workSchedule.setDayOfWeek(request.getDayOfWeek());
             workSchedule.setStartTime(request.getStartTime());
             workSchedule.setEndTime(request.getEndTime());

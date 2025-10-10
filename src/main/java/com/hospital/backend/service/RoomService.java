@@ -1,75 +1,184 @@
 package com.hospital.backend.service;
 
 import com.hospital.backend.dto.request.room.RoomRequest;
-import com.hospital.backend.entity.Department;
+import com.hospital.backend.dto.response.BaseResponse;
+import com.hospital.backend.dto.response.BaseResponseList;
 import com.hospital.backend.entity.Room;
-import com.hospital.backend.repository.DepartmentRepository;
+import com.hospital.backend.entity.Specialty;
+import com.hospital.backend.exception.BadRequestException;
+import com.hospital.backend.exception.NotFoundException;
 import com.hospital.backend.repository.RoomRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.hospital.backend.repository.SpecialtyRepository;
+import com.hospital.backend.utils.DateUtils;
+import com.hospital.backend.utils.ResponseUtils;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class RoomService {
 
+    private static final String FAILED = "failed";
+    private static final String SUCCESS = "Success";
+    private static final String SYSTEM_ERROR = "Error systems";
+    private static final String OPERATION_FAILED = "Operation failed";
+
     private final RoomRepository roomRepository;
-    private final DepartmentRepository departmentRepository;
+    private final SpecialtyRepository specialtyRepository;
 
-    public RoomService(RoomRepository roomRepository, DepartmentRepository departmentRepository) {
-        this.roomRepository = roomRepository;
-        this.departmentRepository = departmentRepository;
+    /**
+     * Create Room
+     */
+    @Transactional
+    public BaseResponse createRoom(RoomRequest request) {
+        long beginTime = System.currentTimeMillis();
+        try {
+            Room room = new Room();
+
+            // Map thông tin từ request
+            mapToEntity(request, room);
+
+            // Lưu vào DB
+            Room savedRoom = roomRepository.save(room);
+            log.info("End create Room in {} ms", System.currentTimeMillis() - beginTime);
+
+            return ResponseUtils.buildSuccessRes(savedRoom, "Created Room Successfully");
+        } catch (BadRequestException | NotFoundException e) {
+            log.error("Validation error: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("System error while creating room", e);
+            return new BaseResponse(
+                    500, null, SYSTEM_ERROR, FAILED, 1,
+                    OPERATION_FAILED, DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
+            );
+        }
     }
 
-    public Room createRoom(RoomRequest request) {
-        Room room = mapToEntity(request, new Room());
-        return roomRepository.save(room);
+    /**
+     * Update Room
+     */
+    @Transactional
+    public BaseResponse updateRoom(RoomRequest request) {
+        long beginTime = System.currentTimeMillis();
+        try {
+            Room room = roomRepository.findById(request.getId())
+                    .orElseThrow(() -> new NotFoundException("Room not found"));
+
+            // Map lại dữ liệu
+            mapToEntity(request, room);
+
+            Room updatedRoom = roomRepository.save(room);
+            log.info("End update Room in {} ms", System.currentTimeMillis() - beginTime);
+
+            return ResponseUtils.buildSuccessRes(updatedRoom, "Updated Room Successfully");
+        } catch (NotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("System error while updating room", e);
+            return new BaseResponse(
+                    500, null, SYSTEM_ERROR, FAILED, 1,
+                    OPERATION_FAILED, DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
+            );
+        }
     }
 
-    public Room updateRoom(UUID id, RoomRequest request) {
-        Room room = roomRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Room not found"));
-        mapToEntity(request, room);
-        return roomRepository.save(room);
+    /**
+     * Delete Room (soft delete)
+     */
+    @Transactional
+    public BaseResponse deleteRoom(RoomRequest request) {
+        long beginTime = System.currentTimeMillis();
+        try {
+            Room room = roomRepository.findById(request.getId())
+                    .orElseThrow(() -> new NotFoundException("Room not found"));
+
+            room.setIsDeleted(true);
+            roomRepository.save(room);
+
+            log.info("End delete Room in {} ms", System.currentTimeMillis() - beginTime);
+            return ResponseUtils.buildSuccessRes(null, "Deleted Room Successfully");
+        } catch (NotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("System error while deleting room", e);
+            return new BaseResponse(
+                    500, null, SYSTEM_ERROR, FAILED, 1,
+                    OPERATION_FAILED, DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
+            );
+        }
     }
 
-    public void deleteRoom(UUID id) {
-        Room room = roomRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Room not found"));
-        room.setIsDeleted(false); // Soft delete
-        roomRepository.save(room);
+    /**
+     * Get All Active Rooms
+     */
+    public BaseResponse getAllRooms() {
+        log.info("Started fetching all rooms");
+        long beginTime = System.currentTimeMillis();
+        try {
+            List<Room> rooms = roomRepository.findAll()
+                    .stream()
+                    .filter(room -> !Boolean.TRUE.equals(room.getIsDeleted()))
+                    .toList();
+
+            log.info("End fetching rooms in {} ms", System.currentTimeMillis() - beginTime);
+            return ResponseUtils.buildSuccessRes(
+                    new BaseResponseList(rooms, rooms.size()),
+                    "Fetched Rooms Successfully"
+            );
+        } catch (Exception e) {
+            log.error("System error while fetching rooms", e);
+            return new BaseResponse(
+                    500, null, SYSTEM_ERROR, FAILED, 1,
+                    OPERATION_FAILED, DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
+            );
+        }
     }
 
-    public Optional<Room> getRoomById(UUID id) {
-        return roomRepository.findById(id).filter(Room::isActive);
+    /**
+     * Get Room By ID
+     */
+    public BaseResponse getRoomById(RoomRequest request) {
+        try {
+            Room room = roomRepository.findById(request.getId())
+                    .orElseThrow(() -> new NotFoundException("Room not found"));
+            return ResponseUtils.buildSuccessRes(room, "Fetched Room Successfully");
+        } catch (NotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("System error while fetching room by id", e);
+            return new BaseResponse(
+                    500, null, SYSTEM_ERROR, FAILED, 1,
+                    OPERATION_FAILED, DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
+            );
+        }
     }
 
-    public List<Room> getAllRooms() {
-        return roomRepository.findAll()
-                .stream()
-                .filter(Room::isActive)
-                .toList();
-    }
-
-    private Room mapToEntity(RoomRequest request, Room room) {
+    /**
+     * Mapping data từ request sang entity
+     */
+    private void mapToEntity(RoomRequest request, Room room) {
         room.setRoomNo(request.getRoomNo());
         room.setRoomType(request.getRoomType());
         room.setFloor(request.getFloor());
         room.setCapacity(request.getCapacity());
         room.setStatus(request.getStatus());
         room.setDescription(request.getDescription());
-        room.setIsDeleted(request.isActive());
+        room.setIsDeleted(false); // Luôn mặc định false khi tạo mới hoặc cập nhật
 
-        if (request.getDepartmentId() != null) {
-            Department department = departmentRepository.findById(request.getDepartmentId())
-                    .orElseThrow(() -> new EntityNotFoundException("Department not found"));
-            room.setDepartment(department);
+        if (request.getSpecialtyId() != null) {
+            Specialty specialty = specialtyRepository.findById(request.getSpecialtyId())
+                    .orElseThrow(() -> new NotFoundException("Specialty not found"));
+            room.setSpecialty(specialty);
         } else {
-            room.setDepartment(null);
+            room.setSpecialty(null);
         }
-
-        return room;
     }
 }

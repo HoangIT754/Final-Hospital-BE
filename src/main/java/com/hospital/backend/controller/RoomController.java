@@ -2,8 +2,7 @@ package com.hospital.backend.controller;
 
 import com.hospital.backend.constant.APIConstants;
 import com.hospital.backend.dto.request.room.RoomRequest;
-import com.hospital.backend.dto.request.room.RoomIdRequest;
-import com.hospital.backend.entity.Room;
+import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.service.RoomService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,53 +18,44 @@ public class RoomController {
         this.roomService = roomService;
     }
 
-    @PostMapping(APIConstants.API_CREATE_ROOM)
-    public ResponseEntity<Room> create(@RequestBody RoomRequest request) {
-        return ResponseEntity.ok(roomService.createRoom(request));
+    @PostMapping(value = APIConstants.API_CREATE_ROOM)
+    public ResponseEntity<BaseResponse> createRoom(@RequestBody RoomRequest request) {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = roomService.createRoom(request);
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @PostMapping(APIConstants.API_UPDATE_ROOM)
-    public ResponseEntity<Room> update(@RequestBody RoomIdAndRequest payload) {
-        return ResponseEntity.ok(roomService.updateRoom(payload.getId(), payload.getRequest()));
+    public ResponseEntity<BaseResponse> updateRoom(@RequestBody RoomRequest request) {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = roomService.updateRoom(request);
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @PostMapping(APIConstants.API_DELETE_ROOM)
-    public ResponseEntity<String> delete(@RequestBody RoomIdRequest request) {
-        roomService.deleteRoom(request.getId());
-        return ResponseEntity.ok("Room deleted (soft)");
+    public ResponseEntity<BaseResponse> delete(@RequestBody RoomRequest request) {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = roomService.deleteRoom(request);
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @PostMapping(APIConstants.API_GET_ROOM_BY_ID)
-    public ResponseEntity<Room> getById(@RequestBody RoomIdRequest request) {
-        return roomService.getRoomById(request.getId())
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<BaseResponse> getById(@RequestBody RoomRequest request) {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = roomService.getRoomById(request);
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @PostMapping(APIConstants.API_GET_ALL_ROOMS)
-    public ResponseEntity<List<Room>> getAll() {
-        return ResponseEntity.ok(roomService.getAllRooms());
+    public ResponseEntity<BaseResponse> getAll() {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = roomService.getAllRooms();
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
-    // Inner class cho update (gồm id + dữ liệu room)
-    public static class RoomIdAndRequest {
-        private UUID id;
-        private RoomRequest request;
-
-        public UUID getId() {
-            return id;
-        }
-
-        public void setId(UUID id) {
-            this.id = id;
-        }
-
-        public RoomRequest getRequest() {
-            return request;
-        }
-
-        public void setRequest(RoomRequest request) {
-            this.request = request;
-        }
-    }
 }

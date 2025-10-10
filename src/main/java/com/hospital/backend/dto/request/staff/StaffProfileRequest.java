@@ -1,4 +1,4 @@
-package com.hospital.backend.dto.request.doctor;
+package com.hospital.backend.dto.request.staff;
 
 import com.hospital.backend.constant.GenderEnum;
 import lombok.AccessLevel;
@@ -12,7 +12,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class DoctorProfileRequest {
+public class StaffProfileRequest {
     private UUID userId;
     private String firstName;
     private String lastName;

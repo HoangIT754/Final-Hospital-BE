@@ -29,9 +29,9 @@ public class Appointment extends AuditModel {
     PatientProfile patient; // Bệnh nhân đặt lịch
 
     @ManyToOne
-    @JoinColumn(name = "doctor_id")
+    @JoinColumn(name = "staff_id")
     @NotNull
-    DoctorProfile doctor; // Bác sĩ khám
+    StaffProfile staff; // Bác sĩ khám
 
     @Column(name = "appointment_start_time")
     LocalDateTime appointmentStartTime; // Thời gian bắt đầu khám

@@ -19,7 +19,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "cfg_patient_status")
-public class PatientStatus {
+public class PatientStatus extends AuditModel{
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

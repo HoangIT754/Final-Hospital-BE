@@ -19,7 +19,7 @@ public class AppointmentRequest {
     UUID patientId; // Id của bệnh nhân đặt lịch
 
     @NotNull
-    UUID doctorId; // Id của bác sĩ khám
+    UUID staffId; // Id của bác sĩ khám
 
     @NotNull
     LocalDateTime appointmentStartTime; // Thời gian bắt đầu khám

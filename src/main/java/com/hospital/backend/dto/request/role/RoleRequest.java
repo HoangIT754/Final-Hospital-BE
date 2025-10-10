@@ -1,4 +1,4 @@
-package com.hospital.backend.dto.request.Role;
+package com.hospital.backend.dto.request.role;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;

@@ -4,10 +4,10 @@ import com.hospital.backend.dto.request.appointment.AppointmentRequest;
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.dto.response.BaseResponseList;
 import com.hospital.backend.entity.Appointment;
-import com.hospital.backend.entity.DoctorProfile;
+import com.hospital.backend.entity.StaffProfile;
 import com.hospital.backend.entity.PatientProfile;
 import com.hospital.backend.repository.AppointmentRepository;
-import com.hospital.backend.repository.DoctorProfileRepository;
+import com.hospital.backend.repository.StaffProfileRepository;
 import com.hospital.backend.repository.PatientProfileRepository;
 import com.hospital.backend.utils.DateUtils;
 import com.hospital.backend.utils.ResponseUtils;
@@ -29,12 +29,12 @@ public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
     private final PatientProfileRepository patientProfileRepository;
-    private final DoctorProfileRepository doctorProfileRepository;
+    private final StaffProfileRepository staffProfileRepository;
 
-    public AppointmentService(AppointmentRepository appointmentRepository, PatientProfileRepository patientProfileRepository, DoctorProfileRepository doctorProfileRepository) {
+    public AppointmentService(AppointmentRepository appointmentRepository, PatientProfileRepository patientProfileRepository, StaffProfileRepository staffProfileRepository) {
         this.appointmentRepository = appointmentRepository;
         this.patientProfileRepository = patientProfileRepository;
-        this.doctorProfileRepository = doctorProfileRepository;
+        this.staffProfileRepository = staffProfileRepository;
     }
 
     public Appointment createAppointment(AppointmentRequest request) {
@@ -44,13 +44,13 @@ public class AppointmentService {
                 .orElseThrow(() -> new IllegalArgumentException("Patient not found with id: " + request.getPatientId()));
 
         // Lấy Doctor, nếu không có thì ném lỗi
-        DoctorProfile doctor = doctorProfileRepository.findById(request.getDoctorId())
-                .orElseThrow(() -> new IllegalArgumentException("Doctor not found with id: " + request.getDoctorId()));
+        StaffProfile staff = staffProfileRepository.findById(request.getStaffId())
+                .orElseThrow(() -> new IllegalArgumentException("Staff not found with id: " + request.getStaffId()));
 
         // Tạo appointment mới
         Appointment appointment = new Appointment();
         appointment.setPatient(patient);
-        appointment.setDoctor(doctor);
+        appointment.setStaff(staff);
         appointment.setAppointmentStartTime(request.getAppointmentStartTime());
         appointment.setAppointmentEndTime(request.getAppointmentEndTime());
         appointment.setReason(request.getReason());
@@ -95,7 +95,7 @@ public class AppointmentService {
         Appointment existing = appointmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
-        existing.setDoctor(updatedAppointment.getDoctor());
+        existing.setStaff(updatedAppointment.getStaff());
         existing.setPatient(updatedAppointment.getPatient());
         existing.setAppointmentStartTime(updatedAppointment.getAppointmentStartTime());
         existing.setAppointmentEndTime(updatedAppointment.getAppointmentEndTime());
