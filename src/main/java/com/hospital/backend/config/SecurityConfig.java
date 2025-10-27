@@ -50,7 +50,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, CustomAuthEntryPoint customAuthEntryPoint) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -62,12 +62,13 @@ public class SecurityConfig {
                                 "/api/v1/app/staff/**",
                                 "/api/v1/app/specialty/**",
                                 "/api/v1/app/role/**",
-                                "/api/v1/app/staff-status/**").permitAll()
+                                "/api/v1/app/staff-status/**",
+                                "/api/v1/app/room/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> {
-                        })
+                        .jwt(jwt -> {})
+//                        .authenticationEntryPoint(customAuthEntryPoint)
                 );
 
         return http.build();

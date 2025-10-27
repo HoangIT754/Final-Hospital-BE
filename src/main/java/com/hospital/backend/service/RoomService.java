@@ -91,6 +91,27 @@ public class RoomService {
     }
 
     /**
+     * Search Room
+     */
+//    @Transactional
+//    public BaseResponse searchRoom(RoomRequest request) {
+//        long beginTime = System.currentTimeMillis();
+//        try {
+//
+//
+//            return ResponseUtils.buildSuccessRes(searchRoom, "Updated Room Successfully");
+//        } catch (NotFoundException e) {
+//            throw e;
+//        } catch (Exception e) {
+//            log.error("System error while updating room", e);
+//            return new BaseResponse(
+//                    500, null, SYSTEM_ERROR, FAILED, 1,
+//                    OPERATION_FAILED, DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
+//            );
+//        }
+//    }
+
+    /**
      * Delete Room (soft delete)
      */
     @Transactional
@@ -167,11 +188,13 @@ public class RoomService {
     private void mapToEntity(RoomRequest request, Room room) {
         room.setRoomNo(request.getRoomNo());
         room.setRoomType(request.getRoomType());
+        room.setRoomArea(request.getRoomArea()); // ⚡ THÊM DÒNG NÀY
         room.setFloor(request.getFloor());
         room.setCapacity(request.getCapacity());
         room.setStatus(request.getStatus());
         room.setDescription(request.getDescription());
-        room.setIsDeleted(false); // Luôn mặc định false khi tạo mới hoặc cập nhật
+        room.setIsDeleted(false);
+        room.setActive(request.getIsActive() != null ? request.getIsActive() : true); // ⚡ XỬ LÝ isActive
 
         if (request.getSpecialtyId() != null) {
             Specialty specialty = specialtyRepository.findById(request.getSpecialtyId())
@@ -181,4 +204,5 @@ public class RoomService {
             room.setSpecialty(null);
         }
     }
+
 }

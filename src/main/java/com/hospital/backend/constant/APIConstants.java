@@ -65,6 +65,7 @@ public class APIConstants {
     // Specialty api
     public static final String API_SPECIALTY = API_VERSION + "/specialty";
     public static final String API_CREATE_SPECIALTY = API_SPECIALTY + "/create";
+    public static final String API_GET_ALL_SPECIALTITIES = API_SPECIALTY + "/get-all";
 
     // Role api
     public static final String API_ROLE = API_VERSION + "/role";

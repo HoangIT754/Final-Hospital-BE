@@ -16,6 +16,9 @@ public class RoomRequest {
     @NotNull
     private Room.RoomType roomType;
 
+    @NotNull
+    private Room.RoomArea roomArea;
+
     private UUID specialtyId;
 
     private Integer floor;
@@ -26,5 +29,5 @@ public class RoomRequest {
 
     private String description;
 
-    private boolean isActive = true;
+    private Boolean isActive = true;
 }

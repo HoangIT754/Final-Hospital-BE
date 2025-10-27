@@ -26,5 +26,11 @@ public class SpecialtyController {
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
-
+    @PostMapping(value = APIConstants.API_GET_ALL_SPECIALTITIES)
+    public ResponseEntity<BaseResponse> getAllSpecialties() {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = specialtyService.getAllSpecialties();
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
 }

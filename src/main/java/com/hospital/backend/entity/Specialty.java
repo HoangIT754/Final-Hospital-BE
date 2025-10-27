@@ -36,5 +36,6 @@ public class Specialty extends AuditModel {
 
     // Danh sách các phòng thuộc khoa này (OneToMany)
     @OneToMany(mappedBy = "specialty", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     List<Room> rooms;
 }
