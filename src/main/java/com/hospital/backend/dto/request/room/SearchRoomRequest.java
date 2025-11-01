@@ -1,28 +1,33 @@
 package com.hospital.backend.dto.request.room;
 
+import com.hospital.backend.entity.Area;
 import com.hospital.backend.entity.Room;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
-public class RoomRequest {
+public class SearchRoomRequest {
     private UUID id;
 
     @NotNull
     private String roomNo;
 
     @NotNull
-    private Room.RoomType roomType;
+    private List<Room.RoomType> roomType;
 
-    private UUID specialtyId;
+    @NotNull
+    private List<UUID> area;
 
-    private UUID floor;
+    private List<UUID> specialtyId;
+
+    private List<UUID> floor;
 
     private Integer capacity;
 
-    private Room.RoomStatus status;
+    private List<Room.RoomStatus> status;
 
     private String description;
 

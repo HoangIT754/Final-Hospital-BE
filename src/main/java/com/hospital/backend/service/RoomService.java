@@ -1,12 +1,14 @@
 package com.hospital.backend.service;
 
 import com.hospital.backend.dto.request.room.RoomRequest;
+import com.hospital.backend.dto.request.room.SearchRoomRequest;
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.dto.response.BaseResponseList;
 import com.hospital.backend.entity.Room;
 import com.hospital.backend.entity.Specialty;
 import com.hospital.backend.exception.BadRequestException;
 import com.hospital.backend.exception.NotFoundException;
+import com.hospital.backend.repository.FloorRepository;
 import com.hospital.backend.repository.RoomRepository;
 import com.hospital.backend.repository.SpecialtyRepository;
 import com.hospital.backend.utils.DateUtils;
@@ -32,6 +34,7 @@ public class RoomService {
 
     private final RoomRepository roomRepository;
     private final SpecialtyRepository specialtyRepository;
+    private final FloorRepository floorRepository;
 
     /**
      * Create Room
@@ -93,23 +96,35 @@ public class RoomService {
     /**
      * Search Room
      */
-//    @Transactional
-//    public BaseResponse searchRoom(RoomRequest request) {
-//        long beginTime = System.currentTimeMillis();
-//        try {
-//
-//
-//            return ResponseUtils.buildSuccessRes(searchRoom, "Updated Room Successfully");
-//        } catch (NotFoundException e) {
-//            throw e;
-//        } catch (Exception e) {
-//            log.error("System error while updating room", e);
-//            return new BaseResponse(
-//                    500, null, SYSTEM_ERROR, FAILED, 1,
-//                    OPERATION_FAILED, DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
-//            );
-//        }
-//    }
+    @Transactional
+    public BaseResponse searchRoom(SearchRoomRequest request) {
+        long beginTime = System.currentTimeMillis();
+        try {
+            List<Room> rooms = roomRepository.searchRooms(
+                    request.getRoomNo(),
+                    request.getRoomType(),
+                    request.getArea(),
+                    request.getStatus(),
+                    request.getFloor(),
+                    request.getSpecialtyId(),
+                    request.getIsActive()
+            );
+
+            log.info("End search Room in {} ms", System.currentTimeMillis() - beginTime);
+            return ResponseUtils.buildSuccessRes(
+                    new BaseResponseList(rooms, rooms.size()),
+                    "Search Rooms Successfully"
+            );
+        } catch (NotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("System error while searching room", e);
+            return new BaseResponse(
+                    500, null, SYSTEM_ERROR, FAILED, 1,
+                    OPERATION_FAILED, DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
+            );
+        }
+    }
 
     /**
      * Delete Room (soft delete)
@@ -185,16 +200,19 @@ public class RoomService {
     /**
      * Mapping data từ request sang entity
      */
+    /**
+     * Mapping data từ request sang entity Room
+     * Kiểm tra Specialty và Floor trước khi set vào.
+     */
     private void mapToEntity(RoomRequest request, Room room) {
+        // Gán các trường cơ bản
         room.setRoomNo(request.getRoomNo());
         room.setRoomType(request.getRoomType());
-        room.setRoomArea(request.getRoomArea()); // ⚡ THÊM DÒNG NÀY
-        room.setFloor(request.getFloor());
         room.setCapacity(request.getCapacity());
         room.setStatus(request.getStatus());
         room.setDescription(request.getDescription());
         room.setIsDeleted(false);
-        room.setActive(request.getIsActive() != null ? request.getIsActive() : true); // ⚡ XỬ LÝ isActive
+        room.setActive(request.getIsActive() != null ? request.getIsActive() : true);
 
         if (request.getSpecialtyId() != null) {
             Specialty specialty = specialtyRepository.findById(request.getSpecialtyId())
@@ -203,6 +221,18 @@ public class RoomService {
         } else {
             room.setSpecialty(null);
         }
+
+        if (request.getFloor() != null) {
+            boolean exists = floorRepository.existsById(request.getFloor());
+            if (!exists) {
+                throw new NotFoundException("Floor not found");
+            }
+
+            room.setFloor(floorRepository.getReferenceById(request.getFloor()));
+        } else {
+            room.setFloor(null);
+        }
     }
+
 
 }

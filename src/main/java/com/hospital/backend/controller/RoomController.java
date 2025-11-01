@@ -2,6 +2,7 @@ package com.hospital.backend.controller;
 
 import com.hospital.backend.constant.APIConstants;
 import com.hospital.backend.dto.request.room.RoomRequest;
+import com.hospital.backend.dto.request.room.SearchRoomRequest;
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.service.RoomService;
 import org.springframework.http.ResponseEntity;
@@ -46,6 +47,14 @@ public class RoomController {
     public ResponseEntity<BaseResponse> getById(@RequestBody RoomRequest request) {
         long beginTime = System.currentTimeMillis();
         BaseResponse response = roomService.getRoomById(request);
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    @PostMapping(APIConstants.API_SEARCH_ROOMS)
+    public ResponseEntity<BaseResponse> searchRoom(@RequestBody SearchRoomRequest request) {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = roomService.searchRoom(request);
         response.setTook(System.currentTimeMillis() - beginTime);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }

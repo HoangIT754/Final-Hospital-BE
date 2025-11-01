@@ -45,6 +45,11 @@ public class APIConstants {
     public static final String API_DELETE_ROOM = API_ROOM + "/delete";
     public static final String API_GET_ROOM_BY_ID = API_ROOM + "/get";
     public static final String API_GET_ALL_ROOMS = API_ROOM + "/get-all";
+    public static final String API_SEARCH_ROOMS = API_ROOM + "/search-room";
+
+    // Floor api
+    public static final String API_FLOOR = API_VERSION + "/floor";
+    public static final String API_GET_FLOORS_BY_AREA = API_FLOOR + "/get-floors-by-area";
 
     // Service api
     public static final String API_SERVICE = API_VERSION + "/service";
@@ -79,4 +84,8 @@ public class APIConstants {
     // Staff status api
     public static final String API_STAFF_STATUS = API_VERSION + "/staff-status";
     public static final String API_CREATE_STAFF_STATUS = API_STAFF_STATUS + "/create";
+
+    // Area api
+    public static final String API_AREA = API_VERSION + "/area";
+    public static final String API_GET_ALL_AREA = API_AREA + "/get-all";
 }

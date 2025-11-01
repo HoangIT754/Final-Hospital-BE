@@ -33,11 +33,6 @@ public class Room extends AuditModel {
     @Column(name = "room_type")
     RoomType roomType;
 
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(name = "room_area")
-    RoomArea roomArea;
-
     // Phòng thuộc khoa nào
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "specialty_id")
@@ -45,8 +40,10 @@ public class Room extends AuditModel {
     Specialty specialty;
 
     // Tầng của phòng
-    @Column(name = "floor")
-    Integer floor;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "floor_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    Floor floor;
 
     // Sức chứa tối đa (cho phòng bệnh)
     @Column(name = "capacity")
@@ -86,18 +83,5 @@ public class Room extends AuditModel {
         OCCUPIED,       // Đang có người sử dụng
         MAINTENANCE,    // Đang bảo trì
         CLOSED          // Đóng vĩnh viễn
-    }
-
-    // Enum định nghĩa khu vực của phòng
-    public enum RoomArea {
-        MAIN_BUILDING,        // Tòa nhà chính
-        EMERGENCY_WING,       // Khu cấp cứu
-        SURGICAL_BLOCK,       // Khu phẫu thuật
-        PEDIATRIC_WING,       // Khu nhi khoa
-        CARDIOLOGY_BLOCK,     // Khu tim mạch
-        RADIOLOGY_CENTER,     // Khu chẩn đoán hình ảnh
-        ADMINISTRATION_WING,  // Khu hành chính
-        ICU_WING,             // Khu hồi sức tích cực
-        LABORATORY_AREA       // Khu xét nghiệm
     }
 }
