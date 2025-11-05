@@ -2,6 +2,7 @@ package com.hospital.backend.service;
 
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.dto.response.BaseResponseList;
+import com.hospital.backend.dto.response.area.AreaResponse;
 import com.hospital.backend.entity.Area;
 import com.hospital.backend.entity.StaffStatus;
 import com.hospital.backend.repository.AreaRepository;
@@ -31,11 +32,21 @@ public class AreaService {
         log.info("Started fetching all area");
         long beginTime = System.currentTimeMillis();
         try {
-            List<Area> statuses = areaRepository.findByIsDeletedFalse();
+            List<Area> areas = areaRepository.findByIsDeletedFalse();
+
+            List<AreaResponse> listAreas = areas.stream().map(a -> {
+                AreaResponse areaResponse = new AreaResponse();
+                areaResponse.setId(a.getId());
+                areaResponse.setName(a.getName());
+                areaResponse.setCode(a.getCode());
+
+                return areaResponse;
+            }).toList();
+
 
             log.info("End fetching area in {} ms", System.currentTimeMillis() - beginTime);
             return ResponseUtils.buildSuccessRes(
-                    new BaseResponseList(statuses, statuses.size()),
+                    new BaseResponseList(listAreas, listAreas.size()),
                     "Fetched Area Successfully"
             );
         } catch (Exception e) {

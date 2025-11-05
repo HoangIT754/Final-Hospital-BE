@@ -4,6 +4,8 @@ import com.hospital.backend.dto.request.room.RoomRequest;
 import com.hospital.backend.dto.request.room.SearchRoomRequest;
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.dto.response.BaseResponseList;
+import com.hospital.backend.dto.response.room.RoomResponse;
+import com.hospital.backend.dto.response.specialty.SpecialtyResponse;
 import com.hospital.backend.entity.Room;
 import com.hospital.backend.entity.Specialty;
 import com.hospital.backend.exception.BadRequestException;
@@ -97,33 +99,49 @@ public class RoomService {
      * Search Room
      */
     @Transactional
-    public BaseResponse searchRoom(SearchRoomRequest request) {
+    public BaseResponse searchRooms(SearchRoomRequest request) {
+        log.info("Start searching rooms with filters: {}", request);
         long beginTime = System.currentTimeMillis();
         try {
+            String roomNo = normalizeString(request.getRoomNo());
+            List<Room.RoomType> roomTypes = normalizeList(request.getRoomType());
+            List<UUID> areaIds = normalizeList(request.getArea());
+            List<Room.RoomStatus> statuses = normalizeList(request.getStatus());
+            List<UUID> floorIds = normalizeList(request.getFloor());
+            List<UUID> specialtyIds = normalizeList(request.getSpecialtyId());
+            Boolean isActive = request.getIsActive();
+
             List<Room> rooms = roomRepository.searchRooms(
-                    request.getRoomNo(),
-                    request.getRoomType(),
-                    request.getArea(),
-                    request.getStatus(),
-                    request.getFloor(),
-                    request.getSpecialtyId(),
-                    request.getIsActive()
+                    roomNo,
+                    roomTypes,
+                    areaIds,
+                    statuses,
+                    floorIds,
+                    specialtyIds,
+                    isActive
             );
 
-            log.info("End search Room in {} ms", System.currentTimeMillis() - beginTime);
+            log.info("Found {} rooms in {} ms", rooms.size(), System.currentTimeMillis() - beginTime);
             return ResponseUtils.buildSuccessRes(
                     new BaseResponseList(rooms, rooms.size()),
                     "Search Rooms Successfully"
             );
-        } catch (NotFoundException e) {
-            throw e;
         } catch (Exception e) {
-            log.error("System error while searching room", e);
+            log.error("System error while searching rooms", e);
             return new BaseResponse(
                     500, null, SYSTEM_ERROR, FAILED, 1,
                     OPERATION_FAILED, DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
             );
         }
+    }
+
+    private String normalizeString(String value) {
+        if (value == null || value.trim().isEmpty()) return null;
+        return value.trim();
+    }
+
+    private <T> List<T> normalizeList(List<T> list) {
+        return (list == null || list.isEmpty()) ? null : list;
     }
 
     /**
@@ -156,18 +174,50 @@ public class RoomService {
      * Get All Active Rooms
      */
     public BaseResponse getAllRooms() {
-        log.info("Started fetching all rooms");
+        log.info("Start fetching all active rooms");
         long beginTime = System.currentTimeMillis();
         try {
-            List<Room> rooms = roomRepository.findAll()
-                    .stream()
-                    .filter(room -> !Boolean.TRUE.equals(room.getIsDeleted()))
-                    .toList();
+            List<Room> rooms = roomRepository.findAllWithFloorAndArea();
 
-            log.info("End fetching rooms in {} ms", System.currentTimeMillis() - beginTime);
+            List<RoomResponse> responses = rooms.stream().map(r -> {
+                RoomResponse dto = new RoomResponse();
+                dto.setId(r.getId());
+                dto.setRoomNo(r.getRoomNo());
+                dto.setRoomType(r.getRoomType());
+                dto.setCapacity(r.getCapacity());
+                dto.setStatus(r.getStatus());
+                dto.setDescription(r.getDescription());
+                dto.setActive(r.isActive());
+
+                // specialty
+                if (r.getSpecialty() != null) {
+                    SpecialtyResponse s = new SpecialtyResponse();
+                    s.setId(r.getSpecialty().getId());
+                    s.setName(r.getSpecialty().getName());
+                    s.setDescription(r.getSpecialty().getDescription());
+                    dto.setSpecialty(s);
+                }
+
+                // floor + area
+                if (r.getFloor() != null) {
+                    dto.setFloorId(r.getFloor().getId());
+                    dto.setFloorName(r.getFloor().getName());
+
+                    if (r.getFloor().getArea() != null) {
+                        dto.setAreaId(r.getFloor().getArea().getId());
+                        dto.setAreaName(r.getFloor().getArea().getName());
+                    }
+                }
+
+                return dto;
+            }).toList();
+
+
+            log.info("End fetching {} rooms in {} ms", rooms.size(), System.currentTimeMillis() - beginTime);
+
             return ResponseUtils.buildSuccessRes(
-                    new BaseResponseList(rooms, rooms.size()),
-                    "Fetched Rooms Successfully"
+                    new BaseResponseList(responses, responses.size()),
+                    "Fetched all rooms successfully"
             );
         } catch (Exception e) {
             log.error("System error while fetching rooms", e);
@@ -197,9 +247,6 @@ public class RoomService {
         }
     }
 
-    /**
-     * Mapping data từ request sang entity
-     */
     /**
      * Mapping data từ request sang entity Room
      * Kiểm tra Specialty và Floor trước khi set vào.

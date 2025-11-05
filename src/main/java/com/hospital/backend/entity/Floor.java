@@ -2,6 +2,7 @@ package com.hospital.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -45,11 +46,12 @@ public class Floor extends AuditModel {
     // Một tầng thuộc 1 khu vực
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "area_id")
-    @JsonBackReference
+    @JsonIgnoreProperties({"floors", "hibernateLazyInitializer", "handler"})
     Area area;
 
     // Một tầng có nhiều phòng
     @OneToMany(mappedBy = "floor", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JsonManagedReference
     List<Room> rooms = new ArrayList<>();
 }

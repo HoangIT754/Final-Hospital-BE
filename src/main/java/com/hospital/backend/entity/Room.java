@@ -1,5 +1,6 @@
 package com.hospital.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -42,7 +43,7 @@ public class Room extends AuditModel {
     // Tầng của phòng
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "floor_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JsonIgnoreProperties({"rooms", "area", "hibernateLazyInitializer", "handler"})
     Floor floor;
 
     // Sức chứa tối đa (cho phòng bệnh)

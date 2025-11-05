@@ -13,19 +13,19 @@ import java.util.UUID;
 @Repository
 public interface RoomRepository extends JpaRepository<Room, UUID> {
     @Query("""
-        SELECT r FROM Room r
-        JOIN r.floor f
-        JOIN f.area a
-        WHERE r.isDeleted = false
-        AND (:roomNo IS NULL OR LOWER(r.roomNo) LIKE LOWER(CONCAT('%', :roomNo, '%')))
-        AND (:roomType IS NULL OR r.roomType IN (:roomType))
-        AND (:areaIds IS NULL OR a.id IN (:areaIds))
-        AND (:status IS NULL OR r.status IN (:status))
-        AND (:specialtyIds IS NULL OR r.specialty.id IN (:specialtyIds))
-        AND (:floorIds IS NULL OR f.id IN (:floorIds))
-        AND (:isActive IS NULL OR r.isActive = :isActive)
-        ORDER BY a.name ASC, f.name ASC, r.roomNo ASC
-    """)
+                SELECT r FROM Room r
+                JOIN r.floor f
+                JOIN f.area a
+                WHERE r.isDeleted = false
+                AND (:roomNo IS NULL OR LOWER(r.roomNo) LIKE LOWER(CONCAT('%', :roomNo, '%')))
+                AND (:roomType IS NULL OR r.roomType IN (:roomType))
+                AND (:areaIds IS NULL OR a.id IN (:areaIds))
+                AND (:status IS NULL OR r.status IN (:status))
+                AND (:specialtyIds IS NULL OR r.specialty.id IN (:specialtyIds))
+                AND (:floorIds IS NULL OR f.id IN (:floorIds))
+                AND (:isActive IS NULL OR r.isActive = :isActive)
+                ORDER BY a.name ASC, f.name ASC, r.roomNo ASC
+            """)
     List<Room> searchRooms(
             @Param("roomNo") String roomNo,
             @Param("roomType") List<Room.RoomType> roomType,
@@ -35,4 +35,18 @@ public interface RoomRepository extends JpaRepository<Room, UUID> {
             @Param("specialtyIds") List<UUID> specialtyIds,
             @Param("isActive") Boolean isActive
     );
+
+    List<Room> findByIsDeletedFalseOrderByRoomNoAsc();
+
+    @Query("""
+                SELECT DISTINCT r
+                FROM Room r
+                LEFT JOIN FETCH r.floor f
+                LEFT JOIN FETCH f.area a
+                LEFT JOIN FETCH r.specialty s
+                WHERE r.isDeleted = false
+                ORDER BY a.name ASC, f.name ASC, r.roomNo ASC
+            """)
+    List<Room> findAllWithFloorAndArea();
+
 }

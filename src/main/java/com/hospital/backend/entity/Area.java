@@ -42,6 +42,6 @@ public class Area extends AuditModel {
     String description;
 
     @OneToMany(mappedBy = "area", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonManagedReference(value = "area-floor")
     List<Floor> floors = new ArrayList<>();
 }

@@ -10,26 +10,11 @@ import java.util.UUID;
 
 @Data
 public class SearchRoomRequest {
-    private UUID id;
-
-    @NotNull
     private String roomNo;
-
-    @NotNull
     private List<Room.RoomType> roomType;
-
-    @NotNull
     private List<UUID> area;
-
-    private List<UUID> specialtyId;
-
-    private List<UUID> floor;
-
-    private Integer capacity;
-
     private List<Room.RoomStatus> status;
-
-    private String description;
-
-    private Boolean isActive = true;
+    private List<UUID> floor;
+    private List<UUID> specialtyId;
+    private Boolean isActive;
 }

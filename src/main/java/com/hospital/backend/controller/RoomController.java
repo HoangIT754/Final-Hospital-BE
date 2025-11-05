@@ -54,7 +54,7 @@ public class RoomController {
     @PostMapping(APIConstants.API_SEARCH_ROOMS)
     public ResponseEntity<BaseResponse> searchRoom(@RequestBody SearchRoomRequest request) {
         long beginTime = System.currentTimeMillis();
-        BaseResponse response = roomService.searchRoom(request);
+        BaseResponse response = roomService.searchRooms(request);
         response.setTook(System.currentTimeMillis() - beginTime);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
