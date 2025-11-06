@@ -1,6 +1,7 @@
 package com.hospital.backend.service;
 
 import com.hospital.backend.dto.request.Floor.FloorRequest;
+import com.hospital.backend.dto.request.Floor.GetFloorByAreaRequest;
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.dto.response.BaseResponseList;
 import com.hospital.backend.entity.Floor;
@@ -27,16 +28,15 @@ public class FloorService {
 
     private final FloorRepository floorRepository;
 
-
     /**
      * Get floor by Area
      */
     @Transactional
-    public BaseResponse getFloorByArea(FloorRequest request) {
+    public BaseResponse getFloorByArea(GetFloorByAreaRequest request) {
         log.info("Started fetching all staff statuses");
         long beginTime = System.currentTimeMillis();
         try {
-            List<Floor> floorsByArea = floorRepository.findByArea_Id(request.getArea().getId());
+            List<Floor> floorsByArea = floorRepository.findFloorsByAreaId(request.getAreaId());
 
             log.info("End fetching staff statuses in {} ms", System.currentTimeMillis() - beginTime);
             return ResponseUtils.buildSuccessRes(
