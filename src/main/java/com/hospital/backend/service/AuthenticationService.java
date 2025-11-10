@@ -117,6 +117,64 @@ public class AuthenticationService {
         }
     }
 
+    @Transactional
+    public BaseResponse loginWithGoogle(String keycloakAccessToken) {
+        long beginTime = System.currentTimeMillis();
+        try {
+            log.info("Login with Google using Keycloak token...");
+
+            // Call endpoint introspection of keycloak to check the token
+            String introspectUrl = keycloakUrl + "/realms/" + realm + "/protocol/openid-connect/userinfo";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(keycloakAccessToken);
+
+            ResponseEntity<Map> userInfoResponse = restTemplate.exchange(
+                    introspectUrl, HttpMethod.GET, new HttpEntity<>(headers), Map.class);
+
+            if (!userInfoResponse.getStatusCode().is2xxSuccessful() || userInfoResponse.getBody() == null) {
+                return ResponseUtils.buildInternalError("Invalid Keycloak token");
+            }
+
+            Map<String, Object> userInfo = userInfoResponse.getBody();
+            log.info("Google user info from Keycloak: {}", userInfo);
+
+            String email = (String) userInfo.get("email");
+            String username = (String) userInfo.getOrDefault("preferred_username", email);
+            Boolean emailVerified = (Boolean) userInfo.getOrDefault("email_verified", false);
+
+            // Save user to DB
+            User user = userRepository.findByEmail(email).orElseGet(() -> {
+                User newUser = new User();
+                newUser.setUsername(username);
+                newUser.setEmail(email);
+                newUser.setPassword("GOOGLE_USER");
+                newUser.setLastLoginAt(LocalDate.now());
+                return userRepository.save(newUser);
+            });
+
+            user.setLastLoginAt(LocalDate.now());
+            userRepository.save(user);
+
+            // Response return
+            Map<String, Object> data = new HashMap<>();
+            data.put("user", user);
+            data.put("access_token", keycloakAccessToken);
+            data.put("refresh_token", null);
+            data.put("expires_in", 300);
+            data.put("token_type", "Bearer");
+
+            log.info("Google login successful for {}", email);
+            return ResponseUtils.buildSuccessRes(data, "Google login successful");
+        } catch (Exception e) {
+            log.error("Error during Google login", e);
+            return new BaseResponse(
+                    500, null, SYSTEM_ERROR, FAILED, 1,
+                    OPERATION_FAILED, DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
+            );
+        }
+    }
+
 
     public ResponseEntity<String> logout(String refreshToken) {
         String logoutUrl = keycloakUrl + "/realms/" + realm + "/protocol/openid-connect/logout";

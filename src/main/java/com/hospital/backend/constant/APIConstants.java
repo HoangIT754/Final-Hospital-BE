@@ -10,6 +10,7 @@ public class APIConstants {
     // Authentication api
     public static final String API_AUTH = API_VERSION + "/auth";
     public static final String API_LOGIN = API_AUTH + "/login";
+    public static final String API_LOGIN_GOOGLE = API_LOGIN + "/login-google";
     public static final String API_LOGOUT = API_AUTH + "/logout";
     public static final String API_SIGNUP = API_AUTH + "/signup";
 
