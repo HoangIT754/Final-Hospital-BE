@@ -57,7 +57,7 @@ public class AppointmentService {
         appointment.setStatus(
                 request.getStatus() != null
                         ? request.getStatus()
-                        : Appointment.AppointmentStatus.PENDING
+                        : Appointment.AppointmentStatus.WAITING
         );
 
         // Lưu DB

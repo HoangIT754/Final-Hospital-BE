@@ -29,5 +29,8 @@ public class AppointmentRequest {
     String reason; // Lý do khám bệnh (tùy chọn)
 
     @NotNull
+    UUID room;
+
+    @NotNull
     Appointment.AppointmentStatus status; // Trạng thái: PENDING, CONFIRMED, COMPLETED, CANCELED, REQUESTED
 }

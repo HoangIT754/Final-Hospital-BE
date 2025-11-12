@@ -98,4 +98,8 @@ public class StaffProfileService {
     public List<StaffProfile> getAllStaffs() {
         return staffProfileRepository.findAll();
     }
+
+    public List<StaffProfile> getAllDoctors() {
+        return staffProfileRepository.findAllDoctors();
+    }
 }
