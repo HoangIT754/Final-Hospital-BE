@@ -17,6 +17,7 @@ public class APIConstants {
     // User api
     public static final String API_USER = API_VERSION + "/user";
     public static final String API_CREATE_USER = API_USER + "/register";
+    public static final String API_UPDATE_USER = API_USER + "/update";
 
     // Staff api
     public static final String API_STAFF = API_USER + "/staff";

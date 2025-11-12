@@ -2,6 +2,7 @@ package com.hospital.backend.dto.request;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Set;
 import java.util.UUID;
@@ -14,6 +15,8 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserRequest {
 
+    UUID id;
+
     String username; // tên đăng nhập
 
     String password; // mật khẩu
@@ -23,4 +26,6 @@ public class UserRequest {
     Set<UUID> roleIds; // danh sách id role (truyền từ client)
 
     String avatarUrl;
+
+    MultipartFile avatarFile;
 }
