@@ -36,7 +36,7 @@ public class APIConstants {
     // Appointment api
     public static final String API_APPOINTMENT = API_VERSION + "/appointments";
     public static final String API_APPOINTMENT_CREATE = API_APPOINTMENT + "/create-appointment";
-    public static final String API_APPOINTMENT_GET_ALL = API_APPOINTMENT + "/get-all-appointments";
+    public static final String API_APPOINTMENT_GET_ALL = API_APPOINTMENT + "/get-all";
     public static final String API_APPOINTMENT_GET_DETAILS = API_APPOINTMENT + "/get-appointment-details";
     public static final String API_APPOINTMENT_UPDATE = API_APPOINTMENT + "/update-appointment";
     public static final String API_APPOINTMENT_DELETE = API_APPOINTMENT + "/delete-appointment";
