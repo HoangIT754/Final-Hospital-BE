@@ -45,4 +45,8 @@ public class User extends AuditModel {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     Set<Role> roles = new HashSet<>(); // Danh sách role của user
+
+    @Lob
+    @Column(name = "avatar_url")
+    String avatarUrl; // URL of avatar of user
 }

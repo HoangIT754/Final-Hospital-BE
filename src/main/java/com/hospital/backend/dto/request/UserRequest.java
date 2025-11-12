@@ -21,4 +21,6 @@ public class UserRequest {
     String email; // email
 
     Set<UUID> roleIds; // danh sách id role (truyền từ client)
+
+    String avatarUrl;
 }
