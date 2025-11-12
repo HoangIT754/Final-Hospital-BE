@@ -1,5 +1,6 @@
 package com.hospital.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hospital.backend.constant.GenderEnum;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -60,6 +61,7 @@ public class StaffProfile extends AuditModel{
     private WorkSchedule workSchedule; // Lịch làm việc cơ bản (ví dụ: T2-T6, 8h-17h)
 
     @OneToMany(mappedBy = "staff", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Appointment> appointments;
 
     @Enumerated(EnumType.STRING)

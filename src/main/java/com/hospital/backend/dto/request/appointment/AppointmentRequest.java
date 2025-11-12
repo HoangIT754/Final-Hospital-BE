@@ -15,22 +15,19 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AppointmentRequest {
 
-    @NotNull
+    UUID appointmentId;
+
     UUID patientId; // Id của bệnh nhân đặt lịch
 
-    @NotNull
     UUID staffId; // Id của bác sĩ khám
 
-    @NotNull
     LocalDateTime appointmentStartTime; // Thời gian bắt đầu khám
 
     LocalDateTime appointmentEndTime; // Thời gian kết thúc khám (có thể null)
 
     String reason; // Lý do khám bệnh (tùy chọn)
 
-    @NotNull
     UUID room;
 
-    @NotNull
     Appointment.AppointmentStatus status; // Trạng thái: PENDING, CONFIRMED, COMPLETED, CANCELED, REQUESTED
 }
