@@ -55,6 +55,7 @@ public class Appointment extends AuditModel {
      */
     public enum AppointmentStatus {
         PENDING,
+        WAITING,
         CONFIRMED,
         COMPLETED,
         CANCELED,

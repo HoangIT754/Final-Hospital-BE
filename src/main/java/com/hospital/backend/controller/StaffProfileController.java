@@ -34,4 +34,10 @@ public class StaffProfileController {
         List<StaffProfile> staffs = staffProfileService.getAllStaffs();
         return ResponseEntity.ok(staffs);
     }
+
+    @PostMapping(value = APIConstants.API_GET_ALL_DOCTOR)
+    public ResponseEntity<List<StaffProfile>> getAllDoctors() {
+        List<StaffProfile> doctors = staffProfileService.getAllDoctors();
+        return ResponseEntity.ok(doctors);
+    }
 }
