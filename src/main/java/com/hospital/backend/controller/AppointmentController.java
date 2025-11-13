@@ -3,6 +3,7 @@ package com.hospital.backend.controller;
 import com.hospital.backend.constant.APIConstants;
 import com.hospital.backend.dto.request.UserRequest;
 import com.hospital.backend.dto.request.appointment.AppointmentRequest;
+import com.hospital.backend.dto.request.appointment.AppointmentSearchRequest;
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.entity.Appointment;
 import com.hospital.backend.service.AppointmentService;
@@ -32,6 +33,30 @@ public class AppointmentController {
     public ResponseEntity<BaseResponse> getAllAppointment(){
         long beginTime = System.currentTimeMillis();
         BaseResponse response = appointmentService.getAllAppointments();
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    @PostMapping(value = APIConstants.API_APPOINTMENT_SEARCH)
+    public ResponseEntity<BaseResponse> searchAppointment(@RequestBody AppointmentSearchRequest request){
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = appointmentService.searchAppointments(request);
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    @PostMapping(value = APIConstants.API_GET_APPOINTMENT_BY_ID)
+    public ResponseEntity<BaseResponse> getAppointmentById(@RequestBody AppointmentRequest request){
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = appointmentService.getAppointmentById(request);
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    @PostMapping(value = APIConstants.API_APPOINTMENT_UPDATE)
+    public ResponseEntity<BaseResponse> updateAppointmentById(@RequestBody AppointmentRequest request){
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = appointmentService.updateAppointmentById(request);
         response.setTook(System.currentTimeMillis() - beginTime);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }

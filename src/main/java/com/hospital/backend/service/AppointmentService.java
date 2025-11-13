@@ -1,6 +1,7 @@
 package com.hospital.backend.service;
 
 import com.hospital.backend.dto.request.appointment.AppointmentRequest;
+import com.hospital.backend.dto.request.appointment.AppointmentSearchRequest;
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.dto.response.BaseResponseList;
 import com.hospital.backend.dto.response.appointment.AppointmentResponse;
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -157,6 +159,142 @@ public class AppointmentService {
             );
         }
     }
+
+    public BaseResponse searchAppointments(AppointmentSearchRequest request) {
+        long begin = System.currentTimeMillis();
+
+        try {
+            if (request.getStartDate() == null &&
+                    request.getEndDate() == null &&
+                    request.getPatientId() == null &&
+                    request.getDoctorId() == null &&
+                    request.getStatus() == null) {
+
+                return getAllAppointments();
+            }
+
+            LocalDateTime startDate = request.getStartDate() != null
+                    ? DateUtils.parseLocalDateTime(request.getStartDate())
+                    : null;
+
+            LocalDateTime endDate = request.getEndDate() != null
+                    ? DateUtils.parseLocalDateTime(request.getEndDate())
+                    : null;
+
+            UUID patientId = request.getPatientId() != null
+                    ? UUID.fromString(request.getPatientId())
+                    : null;
+
+            UUID doctorId = request.getDoctorId() != null
+                    ? UUID.fromString(request.getDoctorId())
+                    : null;
+
+            Appointment.AppointmentStatus status = request.getStatus() != null
+                    ? Appointment.AppointmentStatus.valueOf(request.getStatus())
+                    : null;
+
+            List<Appointment> results = appointmentRepository.searchAppointments(
+                    startDate, endDate, patientId, doctorId, status
+            );
+
+            List<AppointmentResponse> dtoList = results.stream()
+                    .map(this::mapToResponse)
+                    .toList();
+
+            return ResponseUtils.buildSuccessRes(
+                    new BaseResponseList(dtoList, dtoList.size()),
+                    "Search Appointments Successfully"
+            );
+
+        } catch (Exception e) {
+            log.error("Error searching appointments", e);
+            return new BaseResponse(
+                    500, null, SYSTEM_ERROR, FAILED, 1,
+                    OPERATION_FAILED,
+                    DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT),
+                    null
+            );
+        }
+    }
+
+    /**
+     * Get Appointment By ID
+     */
+    public BaseResponse getAppointmentById(AppointmentRequest request) {
+        long beginTime = System.currentTimeMillis();
+        log.info("Start fetching appointment with id: {}", request.getAppointmentId());
+
+        try {
+            if (request.getAppointmentId() == null) {
+                throw new BadRequestException("Appointment ID is required");
+            }
+
+            Appointment appointment = appointmentRepository.findById(request.getAppointmentId())
+                    .orElseThrow(() -> new NotFoundException("Appointment not found"));
+
+            AppointmentResponse response = mapToResponse(appointment);
+
+            log.info("Fetched appointment {} in {} ms",
+                    request.getAppointmentId(), System.currentTimeMillis() - beginTime);
+
+            return ResponseUtils.buildSuccessRes(response, "Fetched Appointment Successfully");
+
+        } catch (NotFoundException | BadRequestException e) {
+            log.error("Validation error: {}", e.getMessage());
+            throw e;
+
+        } catch (Exception e) {
+            log.error("System error while fetching appointment by id", e);
+            return new BaseResponse(
+                    500, null, SYSTEM_ERROR, FAILED, 1,
+                    OPERATION_FAILED,
+                    DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT),
+                    null
+            );
+        }
+    }
+
+    /**
+     * Update Appointment By ID
+     */
+    @Transactional
+    public BaseResponse updateAppointmentById(AppointmentRequest request) {
+        long beginTime = System.currentTimeMillis();
+        log.info("Start updating appointment with id: {}", request.getAppointmentId());
+
+        try {
+            if (request.getAppointmentId() == null) {
+                throw new BadRequestException("Appointment ID is required");
+            }
+
+            Appointment appointment = appointmentRepository.findById(request.getAppointmentId())
+                    .orElseThrow(() -> new NotFoundException("Appointment not found"));
+
+            mapToEntity(request, appointment);
+
+            Appointment updated = appointmentRepository.save(appointment);
+
+            log.info("End update Appointment {} in {} ms",
+                    request.getAppointmentId(), System.currentTimeMillis() - beginTime);
+
+            AppointmentResponse response = mapToResponse(updated);
+            return ResponseUtils.buildSuccessRes(response, "Updated Appointment Successfully");
+
+        } catch (NotFoundException | BadRequestException e) {
+            log.error("Validation error: {}", e.getMessage());
+            throw e;
+
+        } catch (Exception e) {
+            log.error("System error while updating appointment by id", e);
+            return new BaseResponse(
+                    500, null, SYSTEM_ERROR, FAILED, 1,
+                    OPERATION_FAILED,
+                    DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT),
+                    null
+            );
+        }
+    }
+
 
     /**
      * Map AppointmentRequest → Appointment Entity
