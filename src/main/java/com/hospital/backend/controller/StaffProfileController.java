@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 public class StaffProfileController {
@@ -27,6 +28,12 @@ public class StaffProfileController {
         BaseResponse response = staffProfileService.createStaff(request);
         response.setTook(System.currentTimeMillis() - beginTime);
         return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    @PostMapping(value = APIConstants.API_GET_STAFF_BY_USERNAME)
+    public ResponseEntity<StaffProfile> getStaffByUsername(@RequestBody StaffProfileRequest request) {
+        StaffProfile staff = staffProfileService.getStaffInfoByUsername(request);
+        return ResponseEntity.ok(staff);
     }
 
     @PostMapping(value = APIConstants.API_GET_ALL_STAFF)

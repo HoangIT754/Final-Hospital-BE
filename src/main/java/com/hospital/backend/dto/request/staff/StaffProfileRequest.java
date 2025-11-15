@@ -23,4 +23,5 @@ public class StaffProfileRequest {
     private UUID specialtyId;
     private String description;
     private UUID workScheduleId;
+    private String userName;
 }

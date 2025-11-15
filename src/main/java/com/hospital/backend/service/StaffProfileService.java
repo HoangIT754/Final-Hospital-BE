@@ -95,6 +95,11 @@ public class StaffProfileService {
         }
     }
 
+    public StaffProfile getStaffInfoByUsername(StaffProfileRequest request) {
+        return staffProfileRepository.findProfileByUsername(request.getUserName())
+                .orElseThrow(() -> new RuntimeException("Staff profile not found"));
+    }
+
     public List<StaffProfile> getAllStaffs() {
         return staffProfileRepository.findAll();
     }

@@ -24,6 +24,7 @@ public class APIConstants {
     public static final String API_CREATE_STAFF = API_STAFF + "/create-staff";
     public static final String API_GET_ALL_STAFF = API_STAFF + "/get-all-staff";
     public static final String API_GET_ALL_DOCTOR = API_STAFF + "/get-all-doctor";
+    public static final String API_GET_STAFF_BY_USERNAME = API_STAFF + "/get-staff-by-username";
 
     // Patient api
     public static final String API_PATIENT = API_VERSION + "/patient";
