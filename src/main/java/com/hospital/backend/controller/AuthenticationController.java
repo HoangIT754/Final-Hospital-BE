@@ -1,6 +1,7 @@
 package com.hospital.backend.controller;
 
 import com.hospital.backend.constant.APIConstants;
+import com.hospital.backend.dto.request.authentication.AssignRoleRequest;
 import com.hospital.backend.dto.request.authentication.LoginRequest;
 import com.hospital.backend.dto.request.authentication.SignupRequest;
 import com.hospital.backend.dto.request.room.RoomRequest;
@@ -50,5 +51,12 @@ public class AuthenticationController {
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
+    @PostMapping(value = APIConstants.API_ASSIGN_ROLE)
+    public ResponseEntity<BaseResponse> assignRoleToExistingUser(@RequestBody AssignRoleRequest request) {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = authService.assignRoleToExistingUser(request);
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
 }
 

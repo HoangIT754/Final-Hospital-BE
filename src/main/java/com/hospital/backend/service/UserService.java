@@ -17,9 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Date;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -79,6 +77,32 @@ public class UserService {
             );
         }
     }
+
+    public BaseResponse countAllRoles() {
+        long begin = System.currentTimeMillis();
+        try {
+            List<Object[]> result = userRepository.countUsersGroupByRole();
+
+            // Convert Object[] → JSON Map
+            Map<String, Long> response = new HashMap<>();
+            for (Object[] row : result) {
+                String roleName = (String) row[0];
+                Long total = (Long) row[1];
+                response.put(roleName, total);
+            }
+
+            log.info("Count all roles in {} ms", System.currentTimeMillis() - begin);
+            return ResponseUtils.buildSuccessRes(response, "Count All Roles Successfully");
+
+        } catch (Exception e) {
+            log.error("Error countAllRoles", e);
+            return new BaseResponse(
+                    500, null, SYSTEM_ERROR, FAILED, 1, OPERATION_FAILED,
+                    DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
+            );
+        }
+    }
+
 
 //    @Transactional
 //    public BaseResponse updateUserProfile(UserRequest request) {
