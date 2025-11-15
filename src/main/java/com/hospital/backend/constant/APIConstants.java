@@ -13,10 +13,12 @@ public class APIConstants {
     public static final String API_LOGIN_GOOGLE = API_LOGIN + "/login-google";
     public static final String API_LOGOUT = API_AUTH + "/logout";
     public static final String API_SIGNUP = API_AUTH + "/signup";
+    public static final String API_ASSIGN_ROLE = API_AUTH + "/assign-role";
 
     // User api
     public static final String API_USER = API_VERSION + "/user";
     public static final String API_CREATE_USER = API_USER + "/register";
+    public static final String API_COUNT_ALL_ROLES = API_USER + "/count-all-roles";
     public static final String API_UPDATE_USER = API_USER + "/update";
 
     // Staff api

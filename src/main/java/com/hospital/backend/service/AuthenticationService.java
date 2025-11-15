@@ -1,10 +1,12 @@
 package com.hospital.backend.service;
 
+import com.hospital.backend.dto.request.authentication.AssignRoleRequest;
 import com.hospital.backend.dto.request.authentication.LoginRequest;
 import com.hospital.backend.dto.request.authentication.SignupRequest;
 import com.hospital.backend.dto.response.BaseResponse;
-import com.hospital.backend.entity.User;
-import com.hospital.backend.repository.UserRepository;
+import com.hospital.backend.entity.*;
+import com.hospital.backend.exception.BadRequestException;
+import com.hospital.backend.repository.*;
 import com.hospital.backend.utils.DateUtils;
 import com.hospital.backend.utils.ResponseUtils;
 import jakarta.transaction.Transactional;
@@ -35,6 +37,11 @@ public class AuthenticationService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
+    private final PatientStatusRepository patientStatusRepository;
+    private final PatientProfileRepository patientProfileRepository;
+    private final StaffProfileRepository staffProfileRepository;
+    private final SpecialtyRepository specialtyRepository;
 
     @Value("${keycloak.auth-server-url}")
     private String keycloakUrl;
@@ -196,30 +203,15 @@ public class AuthenticationService {
     public BaseResponse signUp(SignupRequest request) {
         long beginTime = System.currentTimeMillis();
         try {
-            // Get admin token from keycloak
-            String tokenUrl = keycloakUrl + "/realms/" + realm + "/protocol/openid-connect/token";
-            HttpHeaders tokenHeaders = new HttpHeaders();
-            tokenHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-            MultiValueMap<String, String> adminBody = new LinkedMultiValueMap<>();
-            adminBody.add("client_id", clientId);
-            adminBody.add("client_secret", clientSecret);
-            adminBody.add("username", adminUsername);
-            adminBody.add("password", adminPassword);
-            adminBody.add("grant_type", "password");
-
-            ResponseEntity<Map> tokenResponse =
-                    restTemplate.postForEntity(tokenUrl, new HttpEntity<>(adminBody, tokenHeaders), Map.class);
-
-            if (!tokenResponse.getStatusCode().is2xxSuccessful()) {
-                log.error("Failed to get admin token from Keycloak");
+            // Get admin token from Keycloak
+            String adminToken = getAdminToken();
+            if (adminToken == null) {
                 return ResponseUtils.buildInternalError("Failed to get admin token");
             }
 
-            String adminToken = (String) tokenResponse.getBody().get("access_token");
-
-            // Create user in keycloak
+            // Create User in Keycloak
             String createUserUrl = keycloakUrl + "/admin/realms/" + realm + "/users";
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setBearerAuth(adminToken);
@@ -230,48 +222,82 @@ public class AuthenticationService {
             userPayload.put("enabled", true);
             userPayload.put("emailVerified", true);
 
-            ResponseEntity<String> createUserRes = restTemplate.postForEntity(
-                    createUserUrl, new HttpEntity<>(userPayload, headers), String.class);
+            ResponseEntity<String> createUserRes =
+                    restTemplate.postForEntity(createUserUrl, new HttpEntity<>(userPayload, headers), String.class);
 
             if (!createUserRes.getStatusCode().is2xxSuccessful()) {
                 log.error("Failed to create user on Keycloak: {}", createUserRes.getBody());
                 return ResponseUtils.buildInternalError("Failed to create user on Keycloak");
             }
 
-            // Get user ID from keycloak
-            String userId = extractUserId(request.getUsername(), adminToken);
-            if (userId == null) {
+            // Get Keycloak User ID
+            String keycloakUserId = extractUserId(request.getUsername(), adminToken);
+            if (keycloakUserId == null) {
                 return ResponseUtils.buildInternalError("User ID not found after creation");
             }
 
-            // Assign password
-            String setPasswordUrl = keycloakUrl + "/admin/realms/" + realm + "/users/" + userId + "/reset-password";
+            // Set password in Keycloak
+            String setPasswordUrl = keycloakUrl + "/admin/realms/" + realm + "/users/" + keycloakUserId + "/reset-password";
+
             Map<String, Object> passwordPayload = new HashMap<>();
             passwordPayload.put("type", "password");
             passwordPayload.put("value", request.getPassword());
             passwordPayload.put("temporary", false);
+
             restTemplate.put(setPasswordUrl, new HttpEntity<>(passwordPayload, headers));
 
-            // Assign default role for new user
-            assignRoleToUser(adminToken, userId, "ROLE_PATIENT");
+            // Assign default role (ROLE_PATIENT)
+            assignRoleToUser(adminToken, keycloakUserId, "ROLE_PATIENT");
 
-            // Save user to DB app
+            // Create User in DB app
             User newUser = new User();
             newUser.setUsername(request.getUsername());
             newUser.setPassword(passwordEncoder.encode(request.getPassword()));
             newUser.setEmail(request.getEmail());
             newUser.setLastLoginAt(LocalDate.now());
-            userRepository.save(newUser);
 
-            // Get access token
+            // Role PATIENT trong DB
+            Role patientRole = roleRepository.findByName("PATIENT")
+                    .orElseThrow(() -> new BadRequestException("Default role PATIENT not found"));
+
+            newUser.getRoles().add(patientRole);
+
+            User savedUser = userRepository.save(newUser);
+
+            // Create PatientProfile for new user
+            PatientProfile profile = new PatientProfile();
+            profile.setUser(savedUser);
+
+            // Default patient info when sign up
+            profile.setFirstName("New");
+            profile.setLastName("Patient");
+            profile.setGender(null);
+            profile.setAddress(null);
+            profile.setPhoneNumber(null);
+            profile.setIdentityNumber(null);
+            profile.setHealthInsuranceNumber(null);
+            profile.setMedicalHistory(null);
+            profile.setAllergies(null);
+            profile.setEmergencyContact(null);
+            profile.setDateOfBirth(null);
+
+            // Set default patient status
+            PatientStatus defaultStatus = patientStatusRepository.findByCode("WAITING")
+                    .orElseThrow(() -> new BadRequestException("Default patient status not found"));
+            profile.setStatus(defaultStatus);
+
+            patientProfileRepository.save(profile);
+
+            // Get access token for FE
             Map<String, Object> tokenMap = getUserToken(request.getUsername(), request.getPassword());
             if (tokenMap == null) {
-                return ResponseUtils.buildInternalError("Failed to get user token after signup");
+                return ResponseUtils.buildInternalError("Failed to retrieve token after signup");
             }
 
-            // Data return
+            // Return data
             Map<String, Object> data = new HashMap<>();
-            data.put("user", newUser);
+            data.put("user", savedUser);
+            data.put("patient_profile", profile);
             data.put("access_token", tokenMap.get("access_token"));
             data.put("refresh_token", tokenMap.get("refresh_token"));
             data.put("expires_in", tokenMap.get("expires_in"));
@@ -280,14 +306,13 @@ public class AuthenticationService {
             log.info("End signUp in {} ms", System.currentTimeMillis() - beginTime);
 
             return ResponseUtils.buildSuccessRes(data, "User created successfully");
+
         } catch (Exception e) {
             log.error("System error while signing up user", e);
-            return new BaseResponse(
-                    500, null, SYSTEM_ERROR, FAILED, 1,
-                    OPERATION_FAILED, DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
-            );
+            return ResponseUtils.buildInternalError("Signup failed");
         }
     }
+
 
     private Map<String, Object> getUserToken(String username, String password) {
         try {
@@ -332,7 +357,7 @@ public class AuthenticationService {
 
     private void assignRoleToUser(String adminToken, String userId, String roleName) {
         try {
-            // Lấy role info từ Keycloak
+            // Get role from keycloak
             String roleUrl = keycloakUrl + "/admin/realms/" + realm + "/roles/" + roleName;
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(adminToken);
@@ -345,11 +370,11 @@ public class AuthenticationService {
                 return;
             }
 
-            // Lấy thông tin role từ response
+            // Get Role info
             Map<String, Object> role = roleResponse.getBody();
             Map<String, Object>[] roles = new Map[]{role};
 
-            // Gán role cho user
+            // Assign Role for User
             String assignUrl = keycloakUrl + "/admin/realms/" + realm +
                     "/users/" + userId + "/role-mappings/realm";
 
@@ -363,4 +388,175 @@ public class AuthenticationService {
         }
     }
 
+    @Transactional
+    public BaseResponse assignRoleToExistingUser(AssignRoleRequest request) {
+        long begin = System.currentTimeMillis();
+        try {
+            // Get admin token Keycloak
+            String adminToken = getAdminToken();
+            if (adminToken == null) {
+                return ResponseUtils.buildInternalError("Cannot get admin token");
+            }
+
+            // Get user in DB
+            User user = userRepository.findByUsername(request.getUsername())
+                    .orElseThrow(() -> new BadRequestException("User not found in DB"));
+
+            String newRoleName = request.getNewRoleName().trim().toUpperCase();
+            boolean isPatientRole = newRoleName.equals("PATIENT");
+
+            // Get role in DB
+            Role newRole = roleRepository.findByName(newRoleName)
+                    .orElseThrow(() -> new BadRequestException("Role not found in DB"));
+
+            // Update role in DB
+            user.getRoles().clear();
+            user.getRoles().add(newRole);
+            userRepository.save(user);
+
+            // Sync roles in Keycloak
+            String kcUserId = extractUserId(request.getUsername(), adminToken);
+            if (kcUserId == null) {
+                return ResponseUtils.buildInternalError("User not found in Keycloak");
+            }
+
+            removeAllRolesInKeycloak(adminToken, kcUserId);
+            assignRoleToUser(adminToken, kcUserId, "ROLE_" + newRoleName);
+
+            // Handle PatientProfile & StaffProfile
+            handleUserProfilesBasedOnRole(user, newRoleName);
+
+            log.info("Updated role {} for username {} in {} ms",
+                    newRoleName, request.getUsername(), System.currentTimeMillis() - begin);
+
+            return ResponseUtils.buildSuccessRes(null, "Role updated successfully");
+
+        } catch (BadRequestException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error assigning role", e);
+            return ResponseUtils.buildInternalError("Failed to assign role");
+        }
+    }
+
+
+    private String getAdminToken() {
+        try {
+            String tokenUrl = keycloakUrl + "/realms/" + realm + "/protocol/openid-connect/token";
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+            body.add("client_id", clientId);
+            body.add("client_secret", clientSecret);
+            body.add("username", adminUsername);
+            body.add("password", adminPassword);
+            body.add("grant_type", "password");
+
+            ResponseEntity<Map> response =
+                    restTemplate.postForEntity(tokenUrl, new HttpEntity<>(body, headers), Map.class);
+
+            return response.getBody() != null ? (String) response.getBody().get("access_token") : null;
+        } catch (Exception e) {
+            log.error("Cannot get admin token");
+            return null;
+        }
+    }
+
+    private void removeAllRolesInKeycloak(String adminToken, String userId) {
+        try {
+            String getRolesUrl = keycloakUrl +
+                    "/admin/realms/" + realm + "/users/" + userId + "/role-mappings/realm";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(adminToken);
+
+            ResponseEntity<Map[]> assignedRolesResponse =
+                    restTemplate.exchange(getRolesUrl, HttpMethod.GET, new HttpEntity<>(headers), Map[].class);
+
+            Map[] assignedRoles = assignedRolesResponse.getBody();
+            if (assignedRoles == null || assignedRoles.length == 0) return;
+
+            // Remove all
+            String deleteUrl = getRolesUrl;
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            restTemplate.exchange(deleteUrl, HttpMethod.DELETE, new HttpEntity<>(assignedRoles, headers), Void.class);
+
+            log.info("Removed all existing roles in Keycloak for user {}", userId);
+
+        } catch (Exception e) {
+            log.error("Failed to remove roles in Keycloak: {}", e.getMessage());
+        }
+    }
+
+    private void handleUserProfilesBasedOnRole(User user, String newRoleName) {
+
+        boolean isPatient = newRoleName.equals("PATIENT");
+
+        // ==================== PATIENT ROLE ====================
+        if (isPatient) {
+            // Deactivate staff profile if exists
+            StaffProfile staff = staffProfileRepository.findByUserId(user.getId()).orElse(null);
+            if (staff != null) {
+                staff.setIsDeleted(true);
+                staffProfileRepository.save(staff);
+            }
+
+            // Check existing patient profile
+            PatientProfile patient = patientProfileRepository.findByUserId(user.getId()).orElse(null);
+            if (patient != null) {
+                patient.setIsDeleted(false);
+                patientProfileRepository.save(patient);
+            } else {
+                // Create new patient profile
+                PatientProfile newPatient = new PatientProfile();
+                newPatient.setUser(user);
+                newPatient.setFirstName("New");
+                newPatient.setLastName("Patient");
+
+                PatientStatus defaultStatus = patientStatusRepository.findByCode("WAITING")
+                        .orElseThrow(() -> new BadRequestException("Default patient status not found"));
+
+                newPatient.setStatus(defaultStatus);
+                newPatient.setIsDeleted(false);
+
+                patientProfileRepository.save(newPatient);
+            }
+            return;
+        }
+
+        // ==================== STAFF ROLE ====================
+
+        // Deactivate patient profile if exists
+        PatientProfile patient = patientProfileRepository.findByUserId(user.getId()).orElse(null);
+        if (patient != null) {
+            patient.setIsDeleted(true);
+            patientProfileRepository.save(patient);
+        }
+
+        // Check existing staff profile
+        StaffProfile staff = staffProfileRepository.findByUserId(user.getId()).orElse(null);
+        if (staff != null) {
+            staff.setIsDeleted(false);
+            staffProfileRepository.save(staff);
+        } else {
+            // Create new staff profile
+            StaffProfile newStaff = new StaffProfile();
+            newStaff.setUser(user);
+            newStaff.setFirstName("New");
+            newStaff.setLastName("Staff");
+            newStaff.setAvailabilityStatus(StaffProfile.AvailabilityStatus.AVAILABLE);
+
+            // Default specialty
+            Specialty defaultSpecialty =
+                    specialtyRepository.findByName("General Internal Medicine")
+                            .orElseThrow(() -> new BadRequestException("Default specialty not found"));
+
+            newStaff.setSpecialty(defaultSpecialty);
+            newStaff.setIsDeleted(false);
+
+            staffProfileRepository.save(newStaff);
+        }
+    }
 }

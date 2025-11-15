@@ -27,4 +27,6 @@ public interface StaffProfileRepository extends JpaRepository<StaffProfile, UUID
         WHERE u.username = :username
     """)
     Optional<StaffProfile> findProfileByUsername(String username);
+
+    Optional<StaffProfile> findByUserId(UUID userId);
 }
