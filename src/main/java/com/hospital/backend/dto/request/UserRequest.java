@@ -28,4 +28,14 @@ public class UserRequest {
     String avatarUrl;
 
     MultipartFile avatarFile;
+
+    String firstName;
+
+    String lastName;
+
+    String address;
+
+    String phoneNumber;
+
+    String gender;
 }

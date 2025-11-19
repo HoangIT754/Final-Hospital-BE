@@ -19,7 +19,10 @@ public class APIConstants {
     public static final String API_USER = API_VERSION + "/user";
     public static final String API_CREATE_USER = API_USER + "/register";
     public static final String API_COUNT_ALL_ROLES = API_USER + "/count-all-roles";
+    public static final String API_GET_ALL_USER = API_USER + "/get-all";
+    public static final String API_GET_USER_BY_ID = API_USER + "/get-by-id";
     public static final String API_UPDATE_USER = API_USER + "/update";
+    public static final String API_GET_USER_BY_USERNAME = API_USER + "/get-by-username";
 
     // Staff api
     public static final String API_STAFF = API_USER + "/staff";

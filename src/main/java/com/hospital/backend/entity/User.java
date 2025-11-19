@@ -38,7 +38,7 @@ public class User extends AuditModel {
     @Column(name = "last_login_at")
     LocalDate lastLoginAt; // thời điểm đăng nhập cuối cùng của user
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -46,7 +46,12 @@ public class User extends AuditModel {
     )
     Set<Role> roles = new HashSet<>(); // Danh sách role của user
 
-    @Lob
     @Column(name = "avatar_url")
     String avatarUrl; // URL of avatar of user
+
+    @OneToOne(mappedBy = "user", fetch = FetchType.EAGER)
+    private StaffProfile staffProfile;
+
+    @OneToOne(mappedBy = "user", fetch = FetchType.EAGER)
+    private PatientProfile patientProfile;
 }
