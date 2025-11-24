@@ -28,5 +28,5 @@ public class Medicine extends AuditModel{
     String unit; // Đơn vị tính (viên, lọ...)
 
     @Column(name = "stock")
-    int stock; // Tồn kho hiện tại
+    Integer stock; // Tồn kho hiện tại
 }

@@ -1,6 +1,7 @@
 package com.hospital.backend.controller;
 
 import com.hospital.backend.constant.APIConstants;
+import com.hospital.backend.dto.request.patient.GetPatientByDoctorRequest;
 import com.hospital.backend.dto.request.patient.PatientRequest;
 import com.hospital.backend.dto.request.patient.PatientSearchRequest;
 import com.hospital.backend.dto.response.BaseResponse;
@@ -56,6 +57,14 @@ public class PatientController {
     public ResponseEntity<BaseResponse> getAllPatientStatus() {
         long beginTime = System.currentTimeMillis();
         BaseResponse response = patientService.getAllPatientStatus();
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    @PostMapping(value = APIConstants.API_GET_PATIENT_BY_DOCTOR)
+    public ResponseEntity<BaseResponse> getPatientByDoctor(@RequestBody GetPatientByDoctorRequest request) {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = patientService.getPatientsByDoctorId(request);
         response.setTook(System.currentTimeMillis() - beginTime);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }

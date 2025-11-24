@@ -1,6 +1,7 @@
 package com.hospital.backend.repository;
 
 import com.hospital.backend.entity.Appointment;
+import com.hospital.backend.entity.PatientProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,4 +30,12 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
             @Param("doctorId") UUID doctorId,
             @Param("status") Appointment.AppointmentStatus status
     );
+
+    @Query("""
+                SELECT DISTINCT a.patient, a.id as appointmentId
+                FROM Appointment a
+                WHERE a.staff.user.id = :doctorUserId
+            """)
+    List<Object[]> findPatientsWithAppointmentByDoctorUserId(@Param("doctorUserId") UUID doctorUserId);
+
 }

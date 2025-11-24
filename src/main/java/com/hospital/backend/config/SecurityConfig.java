@@ -65,7 +65,8 @@ public class SecurityConfig {
                                 "/api/v1/app/staff-status/**",
                                 "/api/v1/app/room/**",
                                 "/api/v1/app/area/**",
-                                "/api/v1/app/floor/**").permitAll()
+                                "/api/v1/app/floor/**",
+                                "/api/v1/app/medical-record/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2

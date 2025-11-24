@@ -38,6 +38,7 @@ public class APIConstants {
     public static final String API_GET_PATIENT_COUNT_BY_STATUS = API_PATIENT + "/count-by-status";
     public static final String API_SEARCH_PATIENT = API_PATIENT + "/search";
     public static final String API_GET_PATIENT_STATUS = API_PATIENT + "/get-patient-status";
+    public static final String API_GET_PATIENT_BY_DOCTOR = API_PATIENT + "/get-patient-by-doctor";
 
     // Appointment api
     public static final String API_APPOINTMENT = API_VERSION + "/appointments";
@@ -99,4 +100,9 @@ public class APIConstants {
     // Area api
     public static final String API_AREA = API_VERSION + "/area";
     public static final String API_GET_ALL_AREA = API_AREA + "/get-all";
+
+    // Medical record api
+    public static final String API_MEDICAL_RECORD = API_VERSION + "/medical-record";
+    public static final String API_CREATE_OR_UPDATE_MEDICAL_RECORD = API_MEDICAL_RECORD + "/create-or-update";
+    public static final String API_GET_MEDICAL_RECORD_BY_APPOINTMENT_ID = API_MEDICAL_RECORD + "/get-by-appointment-id";
 }

@@ -1,14 +1,17 @@
 package com.hospital.backend.service;
 
+import com.hospital.backend.dto.request.patient.GetPatientByDoctorRequest;
 import com.hospital.backend.dto.request.patient.PatientRequest;
 import com.hospital.backend.dto.request.patient.PatientSearchRequest;
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.dto.response.BaseResponseList;
+import com.hospital.backend.dto.response.patient.PatientWithAppointmentResponse;
 import com.hospital.backend.entity.PatientProfile;
 import com.hospital.backend.entity.PatientStatus;
 import com.hospital.backend.entity.User;
 import com.hospital.backend.exception.BadRequestException;
 import com.hospital.backend.exception.NotFoundException;
+import com.hospital.backend.repository.AppointmentRepository;
 import com.hospital.backend.repository.PatientProfileRepository;
 import com.hospital.backend.repository.PatientStatusRepository;
 import com.hospital.backend.repository.UserRepository;
@@ -37,6 +40,7 @@ public class PatientService {
     private final PatientProfileRepository patientProfileRepository;
     private final UserRepository userRepository;
     private final PatientStatusRepository patientStatusRepository;
+    private final AppointmentRepository appointmentRepository;
 
     /**
      * Create Patient
@@ -215,4 +219,44 @@ public class PatientService {
         }
     }
 
+    public BaseResponse getPatientsByDoctorId(GetPatientByDoctorRequest request) {
+        try {
+            List<Object[]> results =
+                    appointmentRepository.findPatientsWithAppointmentByDoctorUserId(request.getDoctorId());
+
+            // Map từ Object[] -> DTO
+            List<PatientWithAppointmentResponse> patients = results.stream()
+                    .map(row -> {
+                        PatientProfile patient = (PatientProfile) row[0];
+                        UUID appointmentId = (UUID) row[1];
+
+                        return PatientWithAppointmentResponse.builder()
+                                .patientId(patient.getId())
+                                .firstName(patient.getFirstName())
+                                .lastName(patient.getLastName())
+                                .dateOfBirth(patient.getDateOfBirth())
+                                .gender(patient.getGender())
+                                .phoneNumber(patient.getPhoneNumber())
+                                .identityNumber(patient.getIdentityNumber())
+                                .emergencyContact(patient.getEmergencyContact())
+                                .statusCode(patient.getStatus() != null ? patient.getStatus().getCode() : null)
+                                .statusName(patient.getStatus() != null ? patient.getStatus().getName() : null)
+                                .appointmentId(appointmentId)
+                                .build();
+                    })
+                    .toList();
+
+            return ResponseUtils.buildSuccessRes(
+                    new BaseResponseList(patients, patients.size()),
+                    "Fetched Patients By Doctor Successfully"
+            );
+
+        } catch (Exception e) {
+            log.error("Error while fetching patients by doctorId", e);
+            return new BaseResponse(
+                    500, null, "System Error", "failed", 1, "Operation failed",
+                    DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
+            );
+        }
+    }
 }
