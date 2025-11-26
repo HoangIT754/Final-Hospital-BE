@@ -22,6 +22,9 @@ public class LabTestOrder extends AuditModel{
     @NotNull
     UUID id; // Id yêu cầu xét nghiệm
 
+    @Column(name = "order_code", unique = true, length = 20)
+    String orderCode;
+
     @ManyToOne
     @JoinColumn(name = "medical_record_id")
     @NotNull

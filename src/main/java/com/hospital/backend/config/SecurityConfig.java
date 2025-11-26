@@ -66,6 +66,9 @@ public class SecurityConfig {
                                 "/api/v1/app/room/**",
                                 "/api/v1/app/area/**",
                                 "/api/v1/app/floor/**",
+                                "/api/v1/app/lab-test/**",
+                                "/api/v1/app/service/**",
+                                "/api/v1/app/lab-test-order/**",
                                 "/api/v1/app/medical-record/**").permitAll()
                         .anyRequest().authenticated()
                 )

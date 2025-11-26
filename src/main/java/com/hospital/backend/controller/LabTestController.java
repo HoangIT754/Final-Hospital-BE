@@ -2,9 +2,12 @@ package com.hospital.backend.controller;
 
 import com.hospital.backend.constant.APIConstants;
 import com.hospital.backend.dto.request.labTest.LabTestRequest;
+import com.hospital.backend.dto.request.patient.PatientRequest;
+import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.entity.LabTest;
 import com.hospital.backend.service.LabTestService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,28 +20,19 @@ public class LabTestController {
 
     private final LabTestService labTestService;
 
-    @PostMapping(APIConstants.API_CREATE_LAB_TEST)
-    public LabTest create(@RequestBody LabTestRequest request) {
-        return labTestService.create(request);
+    @PostMapping(value = APIConstants.API_CREATE_LAB_TEST)
+    public ResponseEntity<BaseResponse> createLabTest(@RequestBody LabTestRequest request) {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = labTestService.createLabTest(request);
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
-    @PostMapping(APIConstants.API_UPDATE_LAB_TEST)
-    public LabTest update(@RequestBody LabTestRequest request) {
-        return labTestService.update(request);
-    }
-
-    @PostMapping(APIConstants.API_DELETE_LAB_TEST)
-    public void delete(@RequestBody LabTestRequest request) {
-        labTestService.delete(request.getId());
-    }
-
-    @PostMapping(APIConstants.API_GET_LAB_TEST_BY_ID)
-    public LabTest getById(@RequestBody LabTestRequest request) {
-        return labTestService.getById(request.getId());
-    }
-
-    @PostMapping(APIConstants.API_GET_ALL_LAB_TESTS)
-    public List<LabTest> getAll() {
-        return labTestService.getAll();
+    @PostMapping(value = APIConstants.API_GET_ALL_LAB_TESTS)
+    public ResponseEntity<BaseResponse> getAllLabTest() {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = labTestService.getAllLabTests();
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 }

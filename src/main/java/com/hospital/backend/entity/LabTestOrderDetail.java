@@ -14,7 +14,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "lab_test_order_detail")
-public class LabTestOrderDetail {
+public class LabTestOrderDetail extends AuditModel{
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -41,8 +42,11 @@ public class LabTest extends AuditModel {
     String referenceRange; // Khoảng giá trị bình thường (VD: 4.0 - 5.9)
 
     @NotNull
-    @Column(name = "price", nullable = false)
-    Double price; // Giá tiền của xét nghiệm
+    @Column(name = "price", nullable = false, precision = 12, scale = 2)
+    BigDecimal price; // Giá tiền của xét nghiệm
+
+    @Column(name = "currency", length = 3)
+    String currency;
 
     @Column(name = "is_active")
     Boolean isActive = true; // Xét nghiệm còn hoạt động hay đã ngừng

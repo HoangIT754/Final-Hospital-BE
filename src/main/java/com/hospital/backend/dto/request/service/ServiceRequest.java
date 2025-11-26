@@ -3,6 +3,7 @@ package com.hospital.backend.dto.request.service;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.util.Set;
 import java.util.UUID;
 
@@ -13,18 +14,20 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ServiceRequest {
 
-    UUID id; // Dùng cho update/delete/get-by-id
+    UUID id;
 
     String name;
 
+    String code;
+
     String description;
 
-    Double price;
+    BigDecimal price;
 
     Integer durationMinutes;
 
     Boolean isActive;
 
-    Set<UUID> labTestIds; // Danh sách ID các LabTest liên kết
+    Set<UUID> labTestIds;
 }
 

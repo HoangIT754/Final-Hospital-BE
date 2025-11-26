@@ -3,6 +3,7 @@ package com.hospital.backend.dto.request.labTest;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Getter
@@ -17,6 +18,7 @@ public class LabTestRequest {
     String description;
     String unit;
     String referenceRange;
-    Double price;
+    BigDecimal price;
+    String currency;
     Boolean isActive;
 }

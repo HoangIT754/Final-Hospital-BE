@@ -52,14 +52,12 @@ public class PatientService {
         try {
             PatientProfile patient = new PatientProfile();
 
-            // Nếu có userId thì set, nếu không thì bỏ qua
             if (request.getUserId() != null) {
                 User user = userRepository.findById(request.getUserId())
                         .orElseThrow(() -> new NotFoundException("User not found"));
                 patient.setUser(user);
             }
 
-            // Set các thông tin hồ sơ bệnh nhân
             patient.setFirstName(request.getFirstName());
             patient.setLastName(request.getLastName());
             patient.setDateOfBirth(request.getDateOfBirth());
@@ -72,7 +70,6 @@ public class PatientService {
             patient.setMedicalHistory(request.getMedicalHistory());
             patient.setAllergies(request.getAllergies());
 
-            // Trạng thái bệnh nhân (bắt buộc)
             PatientStatus status = patientStatusRepository.findById(request.getStatusId())
                     .orElseThrow(() -> new NotFoundException("Patient status not found"));
             patient.setStatus(status);
@@ -224,7 +221,6 @@ public class PatientService {
             List<Object[]> results =
                     appointmentRepository.findPatientsWithAppointmentByDoctorUserId(request.getDoctorId());
 
-            // Map từ Object[] -> DTO
             List<PatientWithAppointmentResponse> patients = results.stream()
                     .map(row -> {
                         PatientProfile patient = (PatientProfile) row[0];
