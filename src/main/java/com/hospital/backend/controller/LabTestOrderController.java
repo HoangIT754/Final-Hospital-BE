@@ -4,11 +4,13 @@ import com.hospital.backend.constant.APIConstants;
 import com.hospital.backend.dto.request.labTest.LabTestRequest;
 import com.hospital.backend.dto.request.labTestOrder.LabTestOrderCreateRequest;
 import com.hospital.backend.dto.request.labTestOrder.LabTestOrderRequest;
+import com.hospital.backend.dto.request.labTestOrder.UpdateLabTestOrderDetailWithFileRequest;
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.service.LabTestOrderService;
 import com.hospital.backend.service.LabTestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,6 +42,14 @@ public class LabTestOrderController {
     public ResponseEntity<BaseResponse> getLabTestOrdersById(@RequestBody LabTestOrderRequest request) {
         long beginTime = System.currentTimeMillis();
         BaseResponse response = labTestOrderService.getLabTestOrderById(request);
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    @PostMapping(value = APIConstants.API_UPDATE_LAB_TEST_ORDER_DETAIL_WITH_FILE)
+    public ResponseEntity<BaseResponse> updateLabTestOrderDetailWithFile(@ModelAttribute UpdateLabTestOrderDetailWithFileRequest request) {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = labTestOrderService.updateLabTestOrderDetailWithFile(request);
         response.setTook(System.currentTimeMillis() - beginTime);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }

@@ -61,4 +61,12 @@ public class UserController {
         response.setTook(System.currentTimeMillis() - beginTime);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
+
+    @PostMapping(value = APIConstants.API_GET_USER_PROFILE_BY_ROLE)
+    public ResponseEntity<BaseResponse> getUserProfileByRole(@RequestBody UserRequest request){
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = userService.getUserProfileByRole(request);
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
 }

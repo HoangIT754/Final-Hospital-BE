@@ -23,6 +23,7 @@ public class APIConstants {
     public static final String API_GET_USER_BY_ID = API_USER + "/get-by-id";
     public static final String API_UPDATE_USER = API_USER + "/update";
     public static final String API_GET_USER_BY_USERNAME = API_USER + "/get-by-username";
+    public static final String API_GET_USER_PROFILE_BY_ROLE = API_USER + "/get-by-role";
 
     // Staff api
     public static final String API_STAFF = API_USER + "/staff";
@@ -84,6 +85,7 @@ public class APIConstants {
     public static final String API_CREATE_LAB_TEST_ORDER = API_LAB_TEST_ORDER + "/create";
     public static final String API_GET_ALL_LAB_TESTS_ORDER = API_LAB_TEST_ORDER + "/get-all";
     public static final String API_GET_LAB_TESTS_ORDER_BY_ID = API_LAB_TEST_ORDER + "/get-by-id";
+    public static final String API_UPDATE_LAB_TEST_ORDER_DETAIL_WITH_FILE = API_LAB_TEST_ORDER + "/update-lab-test-order-detail";
 
     // Specialty api
     public static final String API_SPECIALTY = API_VERSION + "/specialty";
@@ -111,4 +113,11 @@ public class APIConstants {
     public static final String API_MEDICAL_RECORD = API_VERSION + "/medical-record";
     public static final String API_CREATE_OR_UPDATE_MEDICAL_RECORD = API_MEDICAL_RECORD + "/create-or-update";
     public static final String API_GET_MEDICAL_RECORD_BY_APPOINTMENT_ID = API_MEDICAL_RECORD + "/get-by-appointment-id";
+
+    // Medicine api
+    public static final String API_MEDICINE = API_VERSION + "/medicine";
+    public static final String API_CREATE_MEDICINE = API_MEDICINE + "/create";
+    public static final String API_GET_ALL_MEDICINE = API_MEDICINE + "/get-all";
+    public static final String API_SEARCH_MEDICINE = API_MEDICINE + "/saerch";
+
 }

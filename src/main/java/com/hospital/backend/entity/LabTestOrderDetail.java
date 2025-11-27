@@ -33,5 +33,11 @@ public class LabTestOrderDetail extends AuditModel{
 
     @Column(name = "status")
     String status; // PENDING, COMPLETED, etc
+
+    @Column(name = "attachment_url")
+    String attachmentUrl; // Link Cloudinary
+
+    @Column(name = "attachment_public_id")
+    String attachmentPublicId; // Để xoá / replace file
 }
 

@@ -31,6 +31,20 @@ public class CloudinaryService {
         return (String) res.get("secure_url");
     }
 
+    // Upload result file (image/PDF/anything)
+    public String uploadFile(MultipartFile file, String folder, String publicIdHint) throws IOException {
+        Map<?, ?> res = cloudinary.uploader().upload(
+                file.getBytes(),
+                ObjectUtils.asMap(
+                        "folder", folder,
+                        "public_id", publicIdHint,
+                        "overwrite", true,
+                        "resource_type", "auto"
+                )
+        );
+        return (String) res.get("secure_url");
+    }
+
     // delete an image with public id
     public void deleteByPublicId(String publicId) throws IOException {
         if (publicId == null || publicId.isBlank()) return;

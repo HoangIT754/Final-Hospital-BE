@@ -12,17 +12,30 @@ import java.util.UUID;
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
     Boolean existsByUsername(String username);
+
     Boolean existsByEmail(String email);
+
     Optional<User> findByUsername(String username);
+
     Optional<User> findByEmail(String email);
+
     Boolean existsByUsernameAndIdNot(String username, UUID id);
+
     Boolean existsByEmailAndIdNot(String email, UUID id);
+
     @Query("""
-        SELECT r.name AS roleName, COUNT(u.id) AS totalUsers
-        FROM User u
-        JOIN u.roles r
-        GROUP BY r.name
-       """)
+             SELECT r.name AS roleName, COUNT(u.id) AS totalUsers
+             FROM User u
+             JOIN u.roles r
+             GROUP BY r.name
+            """)
     List<Object[]> countUsersGroupByRole();
 
+    @Query("""
+             SELECT DISTINCT u
+             FROM User u
+             JOIN u.roles r
+             WHERE r.name = :roleName
+            """)
+    List<User> findAllByRoleName(String roleName);
 }

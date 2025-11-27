@@ -40,7 +40,15 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final CloudinaryService cloudinaryService;
-//    private final CloudinaryService cloudinaryService;
+
+    private static final Set<String> SUPPORTED_ROLES = Set.of(
+            "ADMIN",
+            "DOCTOR",
+            "LAB_TECHNICIAN",
+            "PATIENT",
+            "PHARMACIST",
+            "RECEPTIONIST"
+    );
 
     /**
      * Create User
@@ -337,4 +345,43 @@ public class UserService {
         }
     }
 
+    public BaseResponse getUserProfileByRole(UserRequest request) {
+        long begin = System.currentTimeMillis();
+
+        try {
+            String rawRole = request.getRoleName();
+            if (rawRole == null || rawRole.isBlank()) {
+                throw new BadRequestException("Role is required");
+            }
+
+            String normalized = rawRole.trim().toUpperCase();
+
+            if (!SUPPORTED_ROLES.contains(normalized)) {
+                throw new BadRequestException("Role is not supported: " + rawRole);
+            }
+
+             String dbRoleName = normalized;
+
+            List<User> users = userRepository.findAllByRoleName(dbRoleName);
+
+            List<UserWithProfileResponse> response = users.stream()
+                    .map(this::mapUser)
+                    .collect(Collectors.toList());
+
+            log.info("Get users by role {} in {} ms",
+                    dbRoleName, System.currentTimeMillis() - begin);
+
+            return ResponseUtils.buildSuccessRes(response, "Get Users By Role Successfully");
+
+        } catch (BadRequestException e) {
+            log.error("Validation error: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Error getUserProfileByRole", e);
+            return new BaseResponse(
+                    500, null, SYSTEM_ERROR, FAILED, 1, OPERATION_FAILED,
+                    DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
+            );
+        }
+    }
 }

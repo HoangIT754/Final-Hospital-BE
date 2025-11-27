@@ -38,4 +38,6 @@ public class UserRequest {
     String phoneNumber;
 
     String gender;
+
+    String roleName;
 }

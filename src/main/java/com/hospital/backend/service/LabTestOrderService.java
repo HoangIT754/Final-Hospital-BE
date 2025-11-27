@@ -2,8 +2,10 @@ package com.hospital.backend.service;
 
 import com.hospital.backend.dto.request.labTestOrder.LabTestOrderCreateRequest;
 import com.hospital.backend.dto.request.labTestOrder.LabTestOrderRequest;
+import com.hospital.backend.dto.request.labTestOrder.UpdateLabTestOrderDetailWithFileRequest;
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.dto.response.BaseResponseList;
+import com.hospital.backend.dto.response.labTestOrder.LabTestInOrderDetailResponse;
 import com.hospital.backend.dto.response.labTestOrder.LabTestOrderResponse;
 import com.hospital.backend.entity.LabTest;
 import com.hospital.backend.entity.LabTestOrder;
@@ -21,6 +23,7 @@ import com.hospital.backend.utils.ResponseUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,15 +44,8 @@ public class LabTestOrderService {
     private final MedicalRecordRepository medicalRecordRepository;
     private final ServiceRepository serviceRepository;
     private final LabTestRepository labTestRepository;
+    private final CloudinaryService cloudinaryService;
 
-    /**
-     * Create LabTestOrder:
-     * - Attached to 1 Medical Record
-     * - Get all LabTests from selected Services
-     * - Add individual LabTests (if any)
-     * - Create LabTestOrderDetail for each LabTest
-     * - Set order status = PENDING, detail = PENDING
-     */
     @Transactional
     public BaseResponse createLabTestOrder(LabTestOrderCreateRequest request) {
         long beginTime = System.currentTimeMillis();
@@ -211,6 +207,7 @@ public class LabTestOrderService {
             );
         }
     }
+
     private String generateOrderCode() {
         Long currentMax = labTestOrderRepository.findMaxOrderCodeIndex();
         long next = (currentMax == null ? 1 : currentMax + 1);
@@ -230,20 +227,35 @@ public class LabTestOrderService {
             MedicalRecord medicalRecord = order.getMedicalRecord();
 
             // 2. Lấy list detail của order
-            // Cần có method trong LabTestOrderDetailRepository:
-            // List<LabTestOrderDetail> findByOrder(LabTestOrder order);
             List<LabTestOrderDetail> details =
                     labTestOrderDetailRepository.findByOrder(order);
 
-            // 3. Lấy danh sách LabTest từ detail
-            List<LabTest> labTests = details.stream()
-                    .map(LabTestOrderDetail::getLabTest)
-                    .filter(Objects::nonNull)
-                    .distinct()
+            // 3. Build danh sách DTO lab test (gộp LabTest + Detail)
+            List<LabTestInOrderDetailResponse> labTestDtos = details.stream()
+                    .filter(d -> d.getLabTest() != null)
+                    .map(d -> {
+                        LabTest lt = d.getLabTest();
+                        return LabTestInOrderDetailResponse.builder()
+                                .labTestId(lt.getId())
+                                .code(lt.getCode())
+                                .name(lt.getName())
+                                .description(lt.getDescription())
+                                .unit(lt.getUnit())
+                                .referenceRange(lt.getReferenceRange())
+                                .price(lt.getPrice())
+                                .currency(lt.getCurrency())
+
+                                .detailId(d.getId())
+                                .result(d.getResult())
+                                .status(d.getStatus())
+                                .attachmentUrl(d.getAttachmentUrl())
+                                .build();
+                    })
                     .toList();
 
-            // 4. Suy ra danh sách Service từ các LabTest (vì LabTest <-> Service là ManyToMany)
-            Set<Service> services = labTests.stream()
+            // 4. Suy ra danh sách Service từ các LabTest (như cũ)
+            Set<Service> services = details.stream()
+                    .map(LabTestOrderDetail::getLabTest)
                     .filter(Objects::nonNull)
                     .flatMap(lt -> {
                         Set<Service> svcs = lt.getServices();
@@ -259,11 +271,11 @@ public class LabTestOrderService {
                     details != null ? details.size() : null
             );
 
-            // 6. Gói vào map để FE dễ xài: { order, services, labTests }
+            // 6. Gói vào map để FE dễ xài
             Map<String, Object> responseData = new HashMap<>();
             responseData.put("order", orderDto);
             responseData.put("services", services);
-            responseData.put("labTests", labTests);
+            responseData.put("labTests", labTestDtos);
 
             log.info("End fetching LabTestOrder by id in {} ms",
                     System.currentTimeMillis() - beginTime);
@@ -291,4 +303,69 @@ public class LabTestOrderService {
         }
     }
 
+    @Transactional
+    public BaseResponse updateLabTestOrderDetailWithFile(
+            UpdateLabTestOrderDetailWithFileRequest request
+    ) {
+        long beginTime = System.currentTimeMillis();
+        log.info("Start update LabTestOrderDetail id={}", request.getDetailId());
+
+        try {
+            LabTestOrderDetail detail = labTestOrderDetailRepository.findById(request.getDetailId())
+                    .orElseThrow(() -> new NotFoundException("LabTestOrderDetail not found"));
+
+            // Upload file (if any)
+            MultipartFile file = (request.getFiles() != null && !request.getFiles().isEmpty()) ? request.getFiles().getFirst() : null;
+            String attachmentUrl = detail.getAttachmentUrl();
+            String attachmentPublicId = detail.getAttachmentPublicId();
+
+            if (file != null && !file.isEmpty()) {
+                // if has existed file -> delete
+                if (attachmentPublicId != null) {
+                    try {
+                        cloudinaryService.deleteByPublicId(attachmentPublicId);
+                    } catch (Exception ex) {
+                        log.warn("Delete old lab result file failed: {}", ex.getMessage());
+                    }
+                }
+
+                // Upload new file
+                String publicIdHint = "lab_result_" + request.getDetailId();
+                String url = cloudinaryService.uploadFile(file, "lab_results", publicIdHint);
+                attachmentUrl = url;
+                attachmentPublicId = cloudinaryService.extractPublicIdFromUrl(url);
+            }
+
+            // Update result & status
+            detail.setResult(request.getResult());
+            detail.setStatus(request.getStatus());
+            detail.setAttachmentUrl(attachmentUrl);
+            detail.setAttachmentPublicId(attachmentPublicId);
+
+            labTestOrderDetailRepository.save(detail);
+
+            log.info("End update LabTestOrderDetail in {} ms",
+                    System.currentTimeMillis() - beginTime);
+
+            return ResponseUtils.buildSuccessRes(
+                    detail,
+                    "Update LabTestOrderDetail Successfully"
+            );
+        } catch (NotFoundException e) {
+            log.error("LabTestOrderDetail not found: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("System error while updating LabTestOrderDetail", e);
+            return new BaseResponse(
+                    500,
+                    null,
+                    SYSTEM_ERROR,
+                    FAILED,
+                    1,
+                    OPERATION_FAILED,
+                    DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT),
+                    null
+            );
+        }
+    }
 }
