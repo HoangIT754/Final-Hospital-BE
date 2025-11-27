@@ -39,7 +39,9 @@ public class CloudinaryService {
                         "folder", folder,
                         "public_id", publicIdHint,
                         "overwrite", true,
-                        "resource_type", "auto"
+                        "resource_type", "raw",
+                        "use_filename", true,
+                        "unique_filename", false
                 )
         );
         return (String) res.get("secure_url");
@@ -50,6 +52,12 @@ public class CloudinaryService {
         if (publicId == null || publicId.isBlank()) return;
         cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", "image"));
     }
+
+    public void deleteRawByPublicId(String publicId) throws IOException {
+        if (publicId == null || publicId.isBlank()) return;
+        cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", "raw"));
+    }
+
 
     // extract public id
     public String extractPublicIdFromUrl(String secureUrl) {

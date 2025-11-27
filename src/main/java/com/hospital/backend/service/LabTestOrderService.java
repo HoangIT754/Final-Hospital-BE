@@ -233,24 +233,7 @@ public class LabTestOrderService {
             // 3. Build danh sách DTO lab test (gộp LabTest + Detail)
             List<LabTestInOrderDetailResponse> labTestDtos = details.stream()
                     .filter(d -> d.getLabTest() != null)
-                    .map(d -> {
-                        LabTest lt = d.getLabTest();
-                        return LabTestInOrderDetailResponse.builder()
-                                .labTestId(lt.getId())
-                                .code(lt.getCode())
-                                .name(lt.getName())
-                                .description(lt.getDescription())
-                                .unit(lt.getUnit())
-                                .referenceRange(lt.getReferenceRange())
-                                .price(lt.getPrice())
-                                .currency(lt.getCurrency())
-
-                                .detailId(d.getId())
-                                .result(d.getResult())
-                                .status(d.getStatus())
-                                .attachmentUrl(d.getAttachmentUrl())
-                                .build();
-                    })
+                    .map(this::buildLabTestDetailDto)
                     .toList();
 
             // 4. Suy ra danh sách Service từ các LabTest (như cũ)
@@ -314,26 +297,28 @@ public class LabTestOrderService {
             LabTestOrderDetail detail = labTestOrderDetailRepository.findById(request.getDetailId())
                     .orElseThrow(() -> new NotFoundException("LabTestOrderDetail not found"));
 
-            // Upload file (if any)
-            MultipartFile file = (request.getFiles() != null && !request.getFiles().isEmpty()) ? request.getFiles().getFirst() : null;
+            MultipartFile file = (request.getFiles() != null && !request.getFiles().isEmpty())
+                    ? request.getFiles().getFirst()
+                    : null;
+
             String attachmentUrl = detail.getAttachmentUrl();
             String attachmentPublicId = detail.getAttachmentPublicId();
+            String attachmentName = detail.getAttachmentName();
 
             if (file != null && !file.isEmpty()) {
-                // if has existed file -> delete
                 if (attachmentPublicId != null) {
                     try {
-                        cloudinaryService.deleteByPublicId(attachmentPublicId);
+                        cloudinaryService.deleteRawByPublicId(attachmentPublicId);
                     } catch (Exception ex) {
                         log.warn("Delete old lab result file failed: {}", ex.getMessage());
                     }
                 }
 
-                // Upload new file
                 String publicIdHint = "lab_result_" + request.getDetailId();
                 String url = cloudinaryService.uploadFile(file, "lab_results", publicIdHint);
                 attachmentUrl = url;
                 attachmentPublicId = cloudinaryService.extractPublicIdFromUrl(url);
+                attachmentName = file.getOriginalFilename();
             }
 
             // Update result & status
@@ -341,14 +326,17 @@ public class LabTestOrderService {
             detail.setStatus(request.getStatus());
             detail.setAttachmentUrl(attachmentUrl);
             detail.setAttachmentPublicId(attachmentPublicId);
+            detail.setAttachmentName(attachmentName);
 
             labTestOrderDetailRepository.save(detail);
 
             log.info("End update LabTestOrderDetail in {} ms",
                     System.currentTimeMillis() - beginTime);
 
+            LabTestInOrderDetailResponse dto = buildLabTestDetailDto(detail);
+
             return ResponseUtils.buildSuccessRes(
-                    detail,
+                    dto,
                     "Update LabTestOrderDetail Successfully"
             );
         } catch (NotFoundException e) {
@@ -368,4 +356,89 @@ public class LabTestOrderService {
             );
         }
     }
+
+    @Transactional
+    public BaseResponse completeLabTestOrder(LabTestOrderRequest request) {
+        long beginTime = System.currentTimeMillis();
+        UUID orderId = request.getLabTestOrderId();
+        log.info("Start complete LabTestOrder id={}", orderId);
+
+        try {
+            LabTestOrder order = labTestOrderRepository.findById(orderId)
+                    .orElseThrow(() -> new NotFoundException("LabTestOrder not found"));
+
+            List<LabTestOrderDetail> details = labTestOrderDetailRepository.findByOrder(order);
+
+            if (details == null || details.isEmpty()) {
+                throw new IllegalArgumentException("LabTestOrder has no details");
+            }
+
+            boolean allCompleted = details.stream()
+                    .allMatch(d -> "COMPLETED".equalsIgnoreCase(d.getStatus()));
+
+            if (!allCompleted) {
+                throw new IllegalArgumentException("Not all test items are COMPLETED");
+            }
+
+            order.setStatus("COMPLETED");
+            labTestOrderRepository.save(order);
+
+            MedicalRecord mr = order.getMedicalRecord();
+            LabTestOrderResponse dto = buildResponseDto(
+                    order,
+                    mr,
+                    details.size()
+            );
+
+            log.info("End complete LabTestOrder in {} ms",
+                    System.currentTimeMillis() - beginTime);
+
+            return ResponseUtils.buildSuccessRes(
+                    dto,
+                    "Completed LabTestOrder Successfully"
+            );
+
+        } catch (NotFoundException | IllegalArgumentException e) {
+            log.error("Validation error in completeLabTestOrder: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("System error while completing LabTestOrder", e);
+            return new BaseResponse(
+                    500,
+                    null,
+                    SYSTEM_ERROR,
+                    FAILED,
+                    1,
+                    OPERATION_FAILED,
+                    DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT),
+                    null
+            );
+        }
+    }
+
+    private LabTestInOrderDetailResponse buildLabTestDetailDto(LabTestOrderDetail detail) {
+        if (detail == null || detail.getLabTest() == null) {
+            return null;
+        }
+
+        LabTest lt = detail.getLabTest();
+
+        return LabTestInOrderDetailResponse.builder()
+                .labTestId(lt.getId())
+                .code(lt.getCode())
+                .name(lt.getName())
+                .description(lt.getDescription())
+                .unit(lt.getUnit())
+                .referenceRange(lt.getReferenceRange())
+                .price(lt.getPrice())
+                .currency(lt.getCurrency())
+                .detailId(detail.getId())
+                .result(detail.getResult())
+                .status(detail.getStatus())
+                .attachmentUrl(detail.getAttachmentUrl())
+                .attachmentName(detail.getAttachmentName())
+                .build();
+    }
+
+
 }

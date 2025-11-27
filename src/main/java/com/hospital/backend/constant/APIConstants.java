@@ -85,7 +85,9 @@ public class APIConstants {
     public static final String API_CREATE_LAB_TEST_ORDER = API_LAB_TEST_ORDER + "/create";
     public static final String API_GET_ALL_LAB_TESTS_ORDER = API_LAB_TEST_ORDER + "/get-all";
     public static final String API_GET_LAB_TESTS_ORDER_BY_ID = API_LAB_TEST_ORDER + "/get-by-id";
+    public static final String API_MARK_COMPLETE= API_LAB_TEST_ORDER + "/mark-complete";
     public static final String API_UPDATE_LAB_TEST_ORDER_DETAIL_WITH_FILE = API_LAB_TEST_ORDER + "/update-lab-test-order-detail";
+
 
     // Specialty api
     public static final String API_SPECIALTY = API_VERSION + "/specialty";

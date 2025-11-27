@@ -39,5 +39,8 @@ public class LabTestOrderDetail extends AuditModel{
 
     @Column(name = "attachment_public_id")
     String attachmentPublicId; // Để xoá / replace file
+
+    @Column(name = "attachment_name")
+    private String attachmentName;
 }
 

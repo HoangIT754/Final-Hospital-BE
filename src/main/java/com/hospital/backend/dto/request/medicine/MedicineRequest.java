@@ -21,5 +21,5 @@ public class MedicineRequest {
     String currency;      // Đơn vị tiền (bắt buộc)
     String manufacturer;  // Hãng SX
     Boolean isActive;
-    MultipartFile imageFile;
+    String imageUrl;
 }

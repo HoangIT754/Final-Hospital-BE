@@ -22,9 +22,9 @@ public class LabTestInOrderDetailResponse {
     BigDecimal price;
     String currency;
 
-    // từ LabTestOrderDetail
     UUID detailId;
     String result;
     String status;
     String attachmentUrl;
+    String attachmentName;
 }

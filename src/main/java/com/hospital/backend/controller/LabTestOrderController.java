@@ -53,4 +53,12 @@ public class LabTestOrderController {
         response.setTook(System.currentTimeMillis() - beginTime);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
+
+    @PostMapping(value = APIConstants.API_MARK_COMPLETE)
+    public ResponseEntity<BaseResponse> markLabTetOrderComplete(@RequestBody LabTestOrderRequest request) {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = labTestOrderService.completeLabTestOrder(request);
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
 }

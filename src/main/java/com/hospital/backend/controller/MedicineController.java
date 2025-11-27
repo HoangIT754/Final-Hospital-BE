@@ -20,11 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class MedicineController {
     private final MedicineService medicineService;
 
-    @PostMapping(
-            value = APIConstants.API_CREATE_MEDICINE
-//            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
-    public ResponseEntity<BaseResponse> createMedicine(@ModelAttribute MedicineRequest request) {
+    @PostMapping(value = APIConstants.API_CREATE_MEDICINE)
+    public ResponseEntity<BaseResponse> createMedicine(@RequestBody MedicineRequest request) {
         long beginTime = System.currentTimeMillis();
         BaseResponse response = medicineService.createMedicine(request);
         response.setTook(System.currentTimeMillis() - beginTime);

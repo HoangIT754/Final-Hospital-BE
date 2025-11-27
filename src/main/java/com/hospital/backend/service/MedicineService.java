@@ -77,23 +77,13 @@ public class MedicineService {
                     request.getIsActive() != null ? request.getIsActive() : true
             );
 
-            // ===== Upload ảnh nếu có =====
-            if (request.getImageFile() != null && !request.getImageFile().isEmpty()) {
-                try {
-                    String folder = "hospital/medicines"; // tuỳ bạn đặt
-                    String publicIdHint = (request.getCode() != null && !request.getCode().isBlank())
-                            ? request.getCode()
-                            : UUID.randomUUID().toString();
+            // === NHẬN URL ẢNH TỪ FE ===
+            if (request.getImageUrl() != null && !request.getImageUrl().isBlank()) {
+                medicine.setImageUrl(request.getImageUrl());
 
-                    String secureUrl = cloudinaryService.uploadImage(request.getImageFile(), folder, publicIdHint);
-                    String publicId = cloudinaryService.extractPublicIdFromUrl(secureUrl);
-
-                    medicine.setImageUrl(secureUrl);
-                    medicine.setImagePublicId(publicId);
-                } catch (IOException ex) {
-                    log.error("Error while uploading medicine image to Cloudinary", ex);
-                    throw new BadRequestException("Failed to upload medicine image");
-                }
+                // nếu bạn muốn lưu luôn publicId để sau này xoá:
+                String publicId = cloudinaryService.extractPublicIdFromUrl(request.getImageUrl());
+                medicine.setImagePublicId(publicId);
             }
 
             Medicine saved = medicineRepository.save(medicine);
