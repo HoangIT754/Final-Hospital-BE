@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -61,4 +62,10 @@ public class Appointment extends AuditModel {
         CANCELED,
         REQUESTED
     }
+
+    @Column(name = "consultation_fee", precision = 12, scale = 2)
+    BigDecimal consultationFee;
+
+    @Column(name = "consultation_currency")
+    String consultationCurrency = "VND";
 }

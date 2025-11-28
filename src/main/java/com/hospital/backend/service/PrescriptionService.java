@@ -204,7 +204,6 @@ public class PrescriptionService {
         log.info("Started searching prescriptions");
 
         try {
-            // Tạo khoảng mặc định rất rộng
             LocalDateTime fromDateTime = LocalDateTime.of(1970, 1, 1, 0, 0);
             LocalDateTime toDateTime = LocalDateTime.of(2100, 1, 1, 0, 0);
 
@@ -215,7 +214,6 @@ public class PrescriptionService {
                 fromDateTime = fromDate.atStartOfDay();
             }
             if (toDate != null) {
-                // exclusive boundary: < toDate+1
                 toDateTime = toDate.plusDays(1).atStartOfDay();
             }
 

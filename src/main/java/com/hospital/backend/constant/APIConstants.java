@@ -128,4 +128,17 @@ public class APIConstants {
     public static final String API_GET_BY_IS_DELETED = API_PRESCRIPTION + "/get-by-is-deleted";
     public static final String API_UPDATE_PRESCRIPTION = API_PRESCRIPTION + "/update";
     public static final String API_SEARCH_PRESCRIPTION = API_PRESCRIPTION + "/search";
+
+    // Bill api
+    public static final String API_BILLING = API_VERSION + "/billing";
+    public static final String API_GET_BILLING_SUMMARY = API_BILLING + "/get-billing-summary";
+
+    // Invoice api
+    public static final String API_INVOICE = API_VERSION + "/invoice";
+    public static final String API_CREATE_FROM_MEDICAL_RECORD = API_INVOICE + "/create-from-medical-record";
+    public static final String API_GET_BY_MEDICAL_RECORD = API_INVOICE + "/get-by-medical-record";
+
+    // Payment api
+    public static final String API_PAYMENT = API_VERSION + "/payment";
+    public static final String API_PAY_BY_CASH = API_PAYMENT + "/pay-by-cash";
 }

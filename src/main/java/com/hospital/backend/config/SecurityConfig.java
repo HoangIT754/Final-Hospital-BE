@@ -55,7 +55,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/app/auth/**",
+                        .requestMatchers(
+                                "/api/v1/app/auth/**",
                                 "/api/v1/app/appointments/**",
                                 "/api/v1/app/user/**",
                                 "/api/v1/app/patient/**",
@@ -71,6 +72,9 @@ public class SecurityConfig {
                                 "/api/v1/app/lab-test-order/**",
                                 "/api/v1/app/medicine/**",
                                 "/api/v1/app/prescription/**",
+                                "/api/v1/app/billing/**",
+                                "/api/v1/app/invoice/**",
+                                "/api/v1/app/payment/**",
                                 "/api/v1/app/medical-record/**").permitAll()
                         .anyRequest().authenticated()
                 )
