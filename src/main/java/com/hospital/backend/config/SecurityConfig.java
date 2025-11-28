@@ -70,6 +70,7 @@ public class SecurityConfig {
                                 "/api/v1/app/service/**",
                                 "/api/v1/app/lab-test-order/**",
                                 "/api/v1/app/medicine/**",
+                                "/api/v1/app/prescription/**",
                                 "/api/v1/app/medical-record/**").permitAll()
                         .anyRequest().authenticated()
                 )

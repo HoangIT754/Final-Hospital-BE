@@ -122,4 +122,10 @@ public class APIConstants {
     public static final String API_GET_ALL_MEDICINE = API_MEDICINE + "/get-all";
     public static final String API_SEARCH_MEDICINE = API_MEDICINE + "/saerch";
 
+    // Prescription api
+    public static final String API_PRESCRIPTION = API_VERSION + "/prescription";
+    public static final String API_CREATE_PRESCRIPTION = API_PRESCRIPTION + "/create";
+    public static final String API_GET_BY_IS_DELETED = API_PRESCRIPTION + "/get-by-is-deleted";
+    public static final String API_UPDATE_PRESCRIPTION = API_PRESCRIPTION + "/update";
+    public static final String API_SEARCH_PRESCRIPTION = API_PRESCRIPTION + "/search";
 }
