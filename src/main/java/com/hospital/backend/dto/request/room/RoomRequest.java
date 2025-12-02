@@ -27,4 +27,6 @@ public class RoomRequest {
     private String description;
 
     private Boolean isActive = true;
+
+    private UUID areaId;
 }

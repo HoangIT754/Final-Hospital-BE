@@ -75,6 +75,7 @@ public class SecurityConfig {
                                 "/api/v1/app/billing/**",
                                 "/api/v1/app/invoice/**",
                                 "/api/v1/app/payment/**",
+                                "/api/v1/app/jasper/**",
                                 "/api/v1/app/medical-record/**").permitAll()
                         .anyRequest().authenticated()
                 )

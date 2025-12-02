@@ -1,6 +1,7 @@
 package com.hospital.backend.controller;
 
 import com.hospital.backend.constant.APIConstants;
+import com.hospital.backend.dto.request.GoogleCallbackRequest;
 import com.hospital.backend.dto.request.authentication.AssignRoleRequest;
 import com.hospital.backend.dto.request.authentication.LoginRequest;
 import com.hospital.backend.dto.request.authentication.SignupRequest;
@@ -25,6 +26,14 @@ public class AuthenticationController {
     public ResponseEntity<BaseResponse> login(@RequestBody LoginRequest request) {
         long beginTime = System.currentTimeMillis();
         BaseResponse response = authService.login(request);
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    @PostMapping(value = APIConstants.API_LOGIN_GOOGLE_CODE)
+    public ResponseEntity<BaseResponse> loginGoogleCallback(@RequestBody GoogleCallbackRequest request) {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = authService.loginWithGoogleCode(request.getCode(), request.getRedirectUri());
         response.setTook(System.currentTimeMillis() - beginTime);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }

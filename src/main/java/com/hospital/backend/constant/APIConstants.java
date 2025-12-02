@@ -11,6 +11,7 @@ public class APIConstants {
     public static final String API_AUTH = API_VERSION + "/auth";
     public static final String API_LOGIN = API_AUTH + "/login";
     public static final String API_LOGIN_GOOGLE = API_LOGIN + "/login-google";
+    public static final String API_LOGIN_GOOGLE_CODE = API_LOGIN + "/login-google-code";
     public static final String API_LOGOUT = API_AUTH + "/logout";
     public static final String API_SIGNUP = API_AUTH + "/signup";
     public static final String API_ASSIGN_ROLE = API_AUTH + "/assign-role";
@@ -83,6 +84,7 @@ public class APIConstants {
     // Lab Test Order api
     public static final String API_LAB_TEST_ORDER = API_VERSION + "/lab-test-order";
     public static final String API_CREATE_LAB_TEST_ORDER = API_LAB_TEST_ORDER + "/create";
+    public static final String API_SEARCH_LAB_TEST_ORDER = API_LAB_TEST_ORDER + "/search";
     public static final String API_GET_ALL_LAB_TESTS_ORDER = API_LAB_TEST_ORDER + "/get-all";
     public static final String API_GET_LAB_TESTS_ORDER_BY_ID = API_LAB_TEST_ORDER + "/get-by-id";
     public static final String API_MARK_COMPLETE= API_LAB_TEST_ORDER + "/mark-complete";
@@ -120,7 +122,7 @@ public class APIConstants {
     public static final String API_MEDICINE = API_VERSION + "/medicine";
     public static final String API_CREATE_MEDICINE = API_MEDICINE + "/create";
     public static final String API_GET_ALL_MEDICINE = API_MEDICINE + "/get-all";
-    public static final String API_SEARCH_MEDICINE = API_MEDICINE + "/saerch";
+    public static final String API_SEARCH_MEDICINE = API_MEDICINE + "/search";
 
     // Prescription api
     public static final String API_PRESCRIPTION = API_VERSION + "/prescription";
@@ -141,4 +143,8 @@ public class APIConstants {
     // Payment api
     public static final String API_PAYMENT = API_VERSION + "/payment";
     public static final String API_PAY_BY_CASH = API_PAYMENT + "/pay-by-cash";
+
+    //Jasper
+    public static final String API_JASPER = API_VERSION + "/jasper";
+    public static final String API_GET_CONTENT = API_JASPER + "/get-content";
 }

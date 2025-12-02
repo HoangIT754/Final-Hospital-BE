@@ -1,5 +1,6 @@
 package com.hospital.backend.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hospital.backend.dto.request.authentication.AssignRoleRequest;
 import com.hospital.backend.dto.request.authentication.LoginRequest;
 import com.hospital.backend.dto.request.authentication.SignupRequest;
@@ -20,7 +21,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -128,42 +131,100 @@ public class AuthenticationService {
     public BaseResponse loginWithGoogle(String keycloakAccessToken) {
         long beginTime = System.currentTimeMillis();
         try {
-            log.info("Login with Google using Keycloak token...");
+            log.info("Login with Google using Keycloak token (decode JWT, no /userinfo)...");
 
-            // Call endpoint introspection of keycloak to check the token
-            String introspectUrl = keycloakUrl + "/realms/" + realm + "/protocol/openid-connect/userinfo";
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(keycloakAccessToken);
-
-            ResponseEntity<Map> userInfoResponse = restTemplate.exchange(
-                    introspectUrl, HttpMethod.GET, new HttpEntity<>(headers), Map.class);
-
-            if (!userInfoResponse.getStatusCode().is2xxSuccessful() || userInfoResponse.getBody() == null) {
-                return ResponseUtils.buildInternalError("Invalid Keycloak token");
+            // Decode JWT access_token
+            String[] parts = keycloakAccessToken.split("\\.");
+            if (parts.length < 2) {
+                return ResponseUtils.buildInternalError("Invalid JWT token format");
             }
 
-            Map<String, Object> userInfo = userInfoResponse.getBody();
-            log.info("Google user info from Keycloak: {}", userInfo);
+            String payloadJson = new String(
+                    Base64.getUrlDecoder().decode(parts[1]),
+                    StandardCharsets.UTF_8
+            );
+            log.info("Decoded JWT payload: {}", payloadJson);
 
-            String email = (String) userInfo.get("email");
-            String username = (String) userInfo.getOrDefault("preferred_username", email);
-            Boolean emailVerified = (Boolean) userInfo.getOrDefault("email_verified", false);
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> claims = mapper.readValue(payloadJson, Map.class);
 
-            // Save user to DB
-            User user = userRepository.findByEmail(email).orElseGet(() -> {
-                User newUser = new User();
-                newUser.setUsername(username);
-                newUser.setEmail(email);
-                newUser.setPassword("GOOGLE_USER");
-                newUser.setLastLoginAt(LocalDate.now());
-                return userRepository.save(newUser);
-            });
+            String email = (String) claims.get("email");
+            String username = (String) claims.getOrDefault("preferred_username", email);
+            if (username == null && email == null) {
+                return ResponseUtils.buildInternalError("Cannot extract user info from token");
+            }
+
+            // Lưu / cập nhật user trong DB
+            User user;
+            if (email != null) {
+                user = userRepository.findByEmail(email).orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setUsername(username != null ? username : email);
+                    newUser.setEmail(email);
+                    newUser.setPassword(passwordEncoder.encode("GOOGLE_USER"));
+                    newUser.setLastLoginAt(LocalDate.now());
+                    return userRepository.save(newUser);
+                });
+            } else {
+                // fallback: không có email, dùng username
+                user = userRepository.findByUsername(username).orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setUsername(username);
+                    newUser.setEmail("");
+                    newUser.setPassword(passwordEncoder.encode("GOOGLE_USER"));
+                    newUser.setLastLoginAt(LocalDate.now());
+                    return userRepository.save(newUser);
+                });
+            }
 
             user.setLastLoginAt(LocalDate.now());
             userRepository.save(user);
 
-            // Response return
+            Role patientRole = roleRepository.findByName("PATIENT")
+                    .orElseThrow(() -> new BadRequestException("Default role PATIENT not found"));
+
+            if (user.getRoles() == null) {
+                user.setRoles(new java.util.HashSet<>());
+            }
+
+            boolean hasPatientRole = user.getRoles().stream()
+                    .anyMatch(r -> "PATIENT".equalsIgnoreCase(r.getName()));
+
+            if (!hasPatientRole) {
+                user.getRoles().add(patientRole);
+                user = userRepository.save(user);
+            }
+
+            PatientProfile profile = patientProfileRepository.findByUserId(user.getId()).orElse(null);
+
+            if (profile == null) {
+                profile = new PatientProfile();
+                profile.setUser(user);
+
+                profile.setFirstName("New");
+                profile.setLastName("Patient");
+                profile.setGender(null);
+                profile.setAddress(null);
+                profile.setPhoneNumber(null);
+                profile.setIdentityNumber(null);
+                profile.setHealthInsuranceNumber(null);
+                profile.setMedicalHistory(null);
+                profile.setAllergies(null);
+                profile.setEmergencyContact(null);
+                profile.setDateOfBirth(null);
+
+                PatientStatus defaultStatus = patientStatusRepository.findByCode("WAITING")
+                        .orElseThrow(() -> new BadRequestException("Default patient status not found"));
+                profile.setStatus(defaultStatus);
+                profile.setIsDeleted(false);
+
+                patientProfileRepository.save(profile);
+            } else if (Boolean.TRUE.equals(profile.getIsDeleted())) {
+                profile.setIsDeleted(false);
+                patientProfileRepository.save(profile);
+            }
+
+            // Trả response cho FE
             Map<String, Object> data = new HashMap<>();
             data.put("user", user);
             data.put("access_token", keycloakAccessToken);
@@ -171,7 +232,7 @@ public class AuthenticationService {
             data.put("expires_in", 300);
             data.put("token_type", "Bearer");
 
-            log.info("Google login successful for {}", email);
+            log.info("Google login successful for user {}", user.getUsername());
             return ResponseUtils.buildSuccessRes(data, "Google login successful");
         } catch (Exception e) {
             log.error("Error during Google login", e);
@@ -181,6 +242,41 @@ public class AuthenticationService {
             );
         }
     }
+
+    @Transactional
+    public BaseResponse loginWithGoogleCode(String code, String redirectUri) {
+        try {
+            String tokenUrl = keycloakUrl + "/realms/" + realm + "/protocol/openid-connect/token";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+            body.add("grant_type", "authorization_code");
+            body.add("client_id", clientId);
+            body.add("client_secret", clientSecret);
+            body.add("code", code);
+            body.add("redirect_uri", redirectUri);
+
+            ResponseEntity<Map> tokenResponse =
+                    restTemplate.postForEntity(tokenUrl, new HttpEntity<>(body, headers), Map.class);
+
+            if (!tokenResponse.getStatusCode().is2xxSuccessful() || tokenResponse.getBody() == null) {
+                return ResponseUtils.buildInternalError("Cannot exchange code for token");
+            }
+
+            String accessToken = (String) tokenResponse.getBody().get("access_token");
+            if (accessToken == null) {
+                return ResponseUtils.buildInternalError("No access_token received from Keycloak");
+            }
+
+            return loginWithGoogle(accessToken);
+        } catch (Exception e) {
+            log.error("Error in loginWithGoogleCode", e);
+            return ResponseUtils.buildInternalError("Google login failed");
+        }
+    }
+
 
 
     public ResponseEntity<String> logout(String refreshToken) {

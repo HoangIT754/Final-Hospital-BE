@@ -6,10 +6,12 @@ import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.dto.response.BaseResponseList;
 import com.hospital.backend.dto.response.room.RoomResponse;
 import com.hospital.backend.dto.response.specialty.SpecialtyResponse;
+import com.hospital.backend.entity.Area;
 import com.hospital.backend.entity.Room;
 import com.hospital.backend.entity.Specialty;
 import com.hospital.backend.exception.BadRequestException;
 import com.hospital.backend.exception.NotFoundException;
+import com.hospital.backend.repository.AreaRepository;
 import com.hospital.backend.repository.FloorRepository;
 import com.hospital.backend.repository.RoomRepository;
 import com.hospital.backend.repository.SpecialtyRepository;
@@ -37,6 +39,7 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final SpecialtyRepository specialtyRepository;
     private final FloorRepository floorRepository;
+    private final AreaRepository areaRepository;
 
     /**
      * Create Room
@@ -77,13 +80,14 @@ public class RoomService {
             Room room = roomRepository.findById(request.getId())
                     .orElseThrow(() -> new NotFoundException("Room not found"));
 
-            // Map lại dữ liệu
             mapToEntity(request, room);
 
             Room updatedRoom = roomRepository.save(room);
+            RoomResponse dto = mapToRoomResponse(updatedRoom);
+
             log.info("End update Room in {} ms", System.currentTimeMillis() - beginTime);
 
-            return ResponseUtils.buildSuccessRes(updatedRoom, "Updated Room Successfully");
+            return ResponseUtils.buildSuccessRes(dto, "Updated Room Successfully");
         } catch (NotFoundException e) {
             throw e;
         } catch (Exception e) {
@@ -94,6 +98,7 @@ public class RoomService {
             );
         }
     }
+
 
     /**
      * Search Room
@@ -121,9 +126,13 @@ public class RoomService {
                     isActive
             );
 
+            List<RoomResponse> responses = rooms.stream()
+                    .map(this::mapToRoomResponse)
+                    .toList();
+
             log.info("Found {} rooms in {} ms", rooms.size(), System.currentTimeMillis() - beginTime);
             return ResponseUtils.buildSuccessRes(
-                    new BaseResponseList(rooms, rooms.size()),
+                    new BaseResponseList(responses, responses.size()),
                     "Search Rooms Successfully"
             );
         } catch (Exception e) {
@@ -174,59 +183,18 @@ public class RoomService {
      * Get All Active Rooms
      */
     public BaseResponse getAllRooms() {
-        log.info("Start fetching all active rooms");
-        long beginTime = System.currentTimeMillis();
-        try {
-            List<Room> rooms = roomRepository.findAllWithFloorAndArea();
+        List<Room> rooms = roomRepository.findAllWithFloorAndArea();
 
-            List<RoomResponse> responses = rooms.stream().map(r -> {
-                RoomResponse dto = new RoomResponse();
-                dto.setId(r.getId());
-                dto.setRoomNo(r.getRoomNo());
-                dto.setRoomType(r.getRoomType());
-                dto.setCapacity(r.getCapacity());
-                dto.setStatus(r.getStatus());
-                dto.setDescription(r.getDescription());
-                dto.setActive(r.isActive());
+        List<RoomResponse> responses = rooms.stream()
+                .map(this::mapToRoomResponse)
+                .toList();
 
-                // specialty
-                if (r.getSpecialty() != null) {
-                    SpecialtyResponse s = new SpecialtyResponse();
-                    s.setId(r.getSpecialty().getId());
-                    s.setName(r.getSpecialty().getName());
-                    s.setDescription(r.getSpecialty().getDescription());
-                    dto.setSpecialty(s);
-                }
-
-                // floor + area
-                if (r.getFloor() != null) {
-                    dto.setFloorId(r.getFloor().getId());
-                    dto.setFloorName(r.getFloor().getName());
-
-                    if (r.getFloor().getArea() != null) {
-                        dto.setAreaId(r.getFloor().getArea().getId());
-                        dto.setAreaName(r.getFloor().getArea().getName());
-                    }
-                }
-
-                return dto;
-            }).toList();
-
-
-            log.info("End fetching {} rooms in {} ms", rooms.size(), System.currentTimeMillis() - beginTime);
-
-            return ResponseUtils.buildSuccessRes(
-                    new BaseResponseList(responses, responses.size()),
-                    "Fetched all rooms successfully"
-            );
-        } catch (Exception e) {
-            log.error("System error while fetching rooms", e);
-            return new BaseResponse(
-                    500, null, SYSTEM_ERROR, FAILED, 1,
-                    OPERATION_FAILED, DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
-            );
-        }
+        return ResponseUtils.buildSuccessRes(
+                new BaseResponseList(responses, responses.size()),
+                "Fetched all rooms successfully"
+        );
     }
+
 
     /**
      * Get Room By ID
@@ -252,7 +220,6 @@ public class RoomService {
      * Kiểm tra Specialty và Floor trước khi set vào.
      */
     private void mapToEntity(RoomRequest request, Room room) {
-        // Gán các trường cơ bản
         room.setRoomNo(request.getRoomNo());
         room.setRoomType(request.getRoomType());
         room.setCapacity(request.getCapacity());
@@ -274,12 +241,49 @@ public class RoomService {
             if (!exists) {
                 throw new NotFoundException("Floor not found");
             }
-
             room.setFloor(floorRepository.getReferenceById(request.getFloor()));
         } else {
             room.setFloor(null);
         }
+
+        if (request.getAreaId() != null) {
+            Area area = areaRepository.findById(request.getAreaId())
+                    .orElseThrow(() -> new NotFoundException("Area not found"));
+            room.setRoomArea(area);
+        } else {
+            throw new BadRequestException("Area is required");
+        }
     }
 
 
+    private RoomResponse mapToRoomResponse(Room r) {
+        RoomResponse dto = new RoomResponse();
+        dto.setId(r.getId());
+        dto.setRoomNo(r.getRoomNo());
+        dto.setRoomType(r.getRoomType());
+        dto.setCapacity(r.getCapacity());
+        dto.setStatus(r.getStatus());
+        dto.setDescription(r.getDescription());
+        dto.setActive(r.isActive());
+
+        if (r.getSpecialty() != null) {
+            SpecialtyResponse s = new SpecialtyResponse();
+            s.setId(r.getSpecialty().getId());
+            s.setName(r.getSpecialty().getName());
+            s.setDescription(r.getSpecialty().getDescription());
+            dto.setSpecialty(s);
+        }
+
+        if (r.getFloor() != null) {
+            dto.setFloorId(r.getFloor().getId());
+            dto.setFloorName(r.getFloor().getName());
+
+            if (r.getFloor().getArea() != null) {
+                dto.setAreaId(r.getFloor().getArea().getId());
+                dto.setAreaName(r.getFloor().getArea().getName());
+            }
+        }
+
+        return dto;
+    }
 }

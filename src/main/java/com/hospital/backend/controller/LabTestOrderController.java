@@ -4,6 +4,7 @@ import com.hospital.backend.constant.APIConstants;
 import com.hospital.backend.dto.request.labTest.LabTestRequest;
 import com.hospital.backend.dto.request.labTestOrder.LabTestOrderCreateRequest;
 import com.hospital.backend.dto.request.labTestOrder.LabTestOrderRequest;
+import com.hospital.backend.dto.request.labTestOrder.LabTestOrderSearchRequest;
 import com.hospital.backend.dto.request.labTestOrder.UpdateLabTestOrderDetailWithFileRequest;
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.service.LabTestOrderService;
@@ -26,6 +27,14 @@ public class LabTestOrderController {
     public ResponseEntity<BaseResponse> createLabTestOrder(@RequestBody LabTestOrderCreateRequest request) {
         long beginTime = System.currentTimeMillis();
         BaseResponse response = labTestOrderService.createLabTestOrder(request);
+        response.setTook(System.currentTimeMillis() - beginTime);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    @PostMapping(value = APIConstants.API_SEARCH_LAB_TEST_ORDER)
+    public ResponseEntity<BaseResponse> searchLabTestOrders(@RequestBody LabTestOrderSearchRequest request) {
+        long beginTime = System.currentTimeMillis();
+        BaseResponse response = labTestOrderService.searchLabTestOrders(request);
         response.setTook(System.currentTimeMillis() - beginTime);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }

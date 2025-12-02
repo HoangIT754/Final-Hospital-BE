@@ -66,6 +66,10 @@ public class Room extends AuditModel {
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Appointment> appointments = new ArrayList<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_area", nullable = false)
+    private Area roomArea;
+
     // Enum định nghĩa loại phòng
     public enum RoomType {
         EXAMINATION,    // Phòng khám

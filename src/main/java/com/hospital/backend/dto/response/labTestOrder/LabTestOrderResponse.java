@@ -21,6 +21,8 @@ public class LabTestOrderResponse {
     UUID appointmentId;
     String patientName;
     String doctorName;
+    UUID patientId;
+    UUID doctorId;
     Integer totalTests;
     LocalDateTime createDate;
 }

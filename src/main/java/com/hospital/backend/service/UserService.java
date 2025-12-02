@@ -2,6 +2,7 @@ package com.hospital.backend.service;
 
 import com.hospital.backend.constant.GenderEnum;
 import com.hospital.backend.dto.request.UserRequest;
+import com.hospital.backend.dto.request.authentication.AssignRoleRequest;
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.dto.response.patient.PatientProfileResponse;
 import com.hospital.backend.dto.response.staff.StaffProfileResponse;
@@ -40,6 +41,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final CloudinaryService cloudinaryService;
+    private final AuthenticationService authenticationService;
 
     private static final Set<String> SUPPORTED_ROLES = Set.of(
             "ADMIN",
@@ -145,39 +147,43 @@ public class UserService {
     public BaseResponse updateUserProfile(UserRequest request) {
         long begin = System.currentTimeMillis();
         try {
-            // find user
+            if (request.getUsername() == null || request.getUsername().isBlank()) {
+                throw new BadRequestException("Username is required");
+            }
+
             User user = userRepository.findByUsername(request.getUsername())
                     .orElseThrow(() -> new BadRequestException("User not found"));
 
-            // Update username
+            UUID userId = user.getId();
+
             if (request.getUsername() != null && !request.getUsername().equals(user.getUsername())) {
-                if (userRepository.existsByUsernameAndIdNot(request.getUsername(), request.getId())) {
+                if (userRepository.existsByUsernameAndIdNot(request.getUsername(), userId)) {
                     throw new BadRequestException("Username already exists");
                 }
                 user.setUsername(request.getUsername());
             }
 
             if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
-                if (userRepository.existsByEmailAndIdNot(request.getEmail(), request.getId())) {
+                if (userRepository.existsByEmailAndIdNot(request.getEmail(), userId)) {
                     throw new BadRequestException("Email already exists");
                 }
                 user.setEmail(request.getEmail());
             }
 
-            // Update password
             if (request.getPassword() != null && !request.getPassword().isBlank()) {
                 user.setPassword(passwordEncoder.encode(request.getPassword()));
             }
 
-            // Update avatar
             if (request.getAvatarFile() != null && !request.getAvatarFile().isEmpty()) {
+                MultipartFile avatarFile = request.getAvatarFile();
+
                 String oldUrl = user.getAvatarUrl();
                 String oldPublicId = cloudinaryService.extractPublicIdFromUrl(oldUrl);
 
                 String folder = "avatars/users/" + user.getId();
                 String publicId = "avatar";
-                String newUrl = cloudinaryService.uploadImage(request.getAvatarFile(), folder, publicId);
 
+                String newUrl = cloudinaryService.uploadImage(avatarFile, folder, publicId);
                 user.setAvatarUrl(newUrl);
 
                 if (oldPublicId != null && !oldPublicId.equals(folder + "/" + publicId)) {
@@ -197,7 +203,6 @@ public class UserService {
                 }
             }
 
-            // Update staff profile
             StaffProfile sp = user.getStaffProfile();
             if (sp != null) {
                 if (request.getFirstName() != null) sp.setFirstName(request.getFirstName());
@@ -214,7 +219,6 @@ public class UserService {
                 }
             }
 
-            // Update patient profile
             PatientProfile pp = user.getPatientProfile();
             if (pp != null) {
                 if (request.getFirstName() != null) pp.setFirstName(request.getFirstName());
@@ -224,11 +228,36 @@ public class UserService {
                 if (request.getGender() != null) pp.setGender(request.getGender());
             }
 
-            // Save user
             User saved = userRepository.save(user);
 
-            log.info("End update User {} in {} ms", request.getId(), System.currentTimeMillis() - begin);
-            return ResponseUtils.buildSuccessRes(saved, "Updated User Successfully");
+            if (request.getRoleName() != null && !request.getRoleName().isBlank()) {
+                String normalizedRole = request.getRoleName().trim().toUpperCase();
+
+                boolean alreadyHasRole = saved.getRoles().stream()
+                        .anyMatch(r -> r.getName().equalsIgnoreCase(normalizedRole));
+
+                if (!alreadyHasRole) {
+                    AssignRoleRequest assignReq = new AssignRoleRequest();
+                    assignReq.setUsername(saved.getUsername());
+                    assignReq.setNewRoleName(normalizedRole);
+
+                    BaseResponse assignRes = authenticationService.assignRoleToExistingUser(assignReq);
+
+                    if (assignRes == null || assignRes.getStatusCode() != 200) {
+                        String msg = assignRes != null && assignRes.getDescription() != null
+                                ? assignRes.getDescription()
+                                : "Failed to update role";
+                        throw new BadRequestException(msg);
+                    }
+                }
+            }
+
+            UserWithProfileResponse dto = mapUser(saved);
+
+            log.info("End update User {} in {} ms",
+                    saved.getId(), System.currentTimeMillis() - begin);
+
+            return ResponseUtils.buildSuccessRes(dto, "Updated User Successfully");
 
         } catch (BadRequestException e) {
             log.error("Validation error: {}", e.getMessage());
@@ -256,7 +285,7 @@ public class UserService {
                 user.getRoles().stream().map(Role::getName).collect(Collectors.toSet())
         );
 
-        boolean isPatient = dto.getRoles().contains("ROLE_PATIENT");
+        boolean isPatient = dto.getRoles().contains("PATIENT");
 
         // Nếu Patient → trả PatientProfile
         if (isPatient && user.getPatientProfile() != null) {
@@ -358,7 +387,7 @@ public class UserService {
                 throw new BadRequestException("Role is not supported: " + rawRole);
             }
 
-             String dbRoleName = normalized;
+            String dbRoleName = normalized;
 
             List<User> users = userRepository.findAllByRoleName(dbRoleName);
 

@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -36,10 +37,57 @@ public class AppointmentService {
     private static final String SYSTEM_ERROR = "Error systems";
     private static final String OPERATION_FAILED = "Operation failed";
 
+    private static final List<Appointment.AppointmentStatus> BLOCKING_STATUSES = Arrays.asList(
+            Appointment.AppointmentStatus.PENDING,
+            Appointment.AppointmentStatus.WAITING,
+            Appointment.AppointmentStatus.CONFIRMED
+    );
+
     private final AppointmentRepository appointmentRepository;
     private final PatientProfileRepository patientProfileRepository;
     private final StaffProfileRepository staffProfileRepository;
     private final RoomRepository roomRepository;
+
+    private void validateDoctorSchedule(UUID staffId,
+                                        LocalDateTime startTime,
+                                        LocalDateTime endTime,
+                                        UUID currentAppointmentId) {
+
+        if (staffId == null) {
+            throw new BadRequestException("Staff ID is required");
+        }
+        if (startTime == null || endTime == null) {
+            throw new BadRequestException("Appointment start time and end time are required");
+        }
+        if (!endTime.isAfter(startTime)) {
+            throw new BadRequestException("Appointment end time must be after start time");
+        }
+
+        boolean hasConflict;
+
+        if (currentAppointmentId == null) {
+            hasConflict = appointmentRepository
+                    .existsByStaff_IdAndIsDeletedFalseAndStatusInAndAppointmentStartTimeLessThanAndAppointmentEndTimeGreaterThan(
+                            staffId,
+                            BLOCKING_STATUSES,
+                            endTime,
+                            startTime
+                    );
+        } else {
+            hasConflict = appointmentRepository
+                    .existsByStaff_IdAndIdNotAndIsDeletedFalseAndStatusInAndAppointmentStartTimeLessThanAndAppointmentEndTimeGreaterThan(
+                            staffId,
+                            currentAppointmentId,
+                            BLOCKING_STATUSES,
+                            endTime,
+                            startTime
+                    );
+        }
+
+        if (hasConflict) {
+            throw new BadRequestException("Doctor already has another appointment in this time range");
+        }
+    }
 
     /**
      * Create Appointment
@@ -48,6 +96,13 @@ public class AppointmentService {
     public BaseResponse createAppointment(AppointmentRequest request) {
         long beginTime = System.currentTimeMillis();
         try {
+            validateDoctorSchedule(
+                    request.getStaffId(),
+                    request.getAppointmentStartTime(),
+                    request.getAppointmentEndTime(),
+                    null
+            );
+
             Appointment appointment = new Appointment();
             mapToEntity(request, appointment);
 
@@ -80,6 +135,13 @@ public class AppointmentService {
             Appointment appointment = appointmentRepository.findById(request.getAppointmentId())
                     .orElseThrow(() -> new NotFoundException("Appointment not found"));
 
+            validateDoctorSchedule(
+                    request.getStaffId(),
+                    request.getAppointmentStartTime(),
+                    request.getAppointmentEndTime(),
+                    request.getAppointmentId()
+            );
+
             mapToEntity(request, appointment);
             Appointment updated = appointmentRepository.save(appointment);
 
@@ -99,6 +161,7 @@ public class AppointmentService {
             );
         }
     }
+
 
     /**
      * Soft Delete Appointment
@@ -268,6 +331,13 @@ public class AppointmentService {
             Appointment appointment = appointmentRepository.findById(request.getAppointmentId())
                     .orElseThrow(() -> new NotFoundException("Appointment not found"));
 
+            validateDoctorSchedule(
+                    request.getStaffId(),
+                    request.getAppointmentStartTime(),
+                    request.getAppointmentEndTime(),
+                    request.getAppointmentId()
+            );
+
             mapToEntity(request, appointment);
 
             Appointment updated = appointmentRepository.save(appointment);
@@ -292,6 +362,7 @@ public class AppointmentService {
             );
         }
     }
+
 
 
     /**

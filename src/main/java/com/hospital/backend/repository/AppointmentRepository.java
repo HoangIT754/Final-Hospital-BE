@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,5 +38,20 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
                 WHERE a.staff.user.id = :doctorUserId
             """)
     List<Object[]> findPatientsWithAppointmentByDoctorUserId(@Param("doctorUserId") UUID doctorUserId);
+
+    boolean existsByStaff_IdAndIsDeletedFalseAndStatusInAndAppointmentStartTimeLessThanAndAppointmentEndTimeGreaterThan(
+            UUID staffId,
+            Collection<Appointment.AppointmentStatus> statuses,
+            LocalDateTime endTime,
+            LocalDateTime startTime
+    );
+
+    boolean existsByStaff_IdAndIdNotAndIsDeletedFalseAndStatusInAndAppointmentStartTimeLessThanAndAppointmentEndTimeGreaterThan(
+            UUID staffId,
+            UUID excludedAppointmentId,
+            Collection<Appointment.AppointmentStatus> statuses,
+            LocalDateTime endTime,
+            LocalDateTime startTime
+    );
 
 }

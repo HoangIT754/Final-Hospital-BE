@@ -2,6 +2,7 @@ package com.hospital.backend.service;
 
 import com.hospital.backend.dto.request.labTestOrder.LabTestOrderCreateRequest;
 import com.hospital.backend.dto.request.labTestOrder.LabTestOrderRequest;
+import com.hospital.backend.dto.request.labTestOrder.LabTestOrderSearchRequest;
 import com.hospital.backend.dto.request.labTestOrder.UpdateLabTestOrderDetailWithFileRequest;
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.dto.response.BaseResponseList;
@@ -25,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -133,25 +135,115 @@ public class LabTestOrderService {
         }
     }
 
+    public BaseResponse searchLabTestOrders(LabTestOrderSearchRequest request) {
+        long beginTime = System.currentTimeMillis();
+        log.info("Start search LabTestOrders with filters: {}", request);
+
+        try {
+            if (request.getStartDate() == null &&
+                    request.getEndDate() == null &&
+                    request.getPatientId() == null &&
+                    request.getDoctorId() == null &&
+                    request.getStatus() == null &&
+                    request.getTestType() == null &&
+                    request.getOrderCode() == null) {
+
+                return getAllLabTestOrders();
+            }
+
+            LocalDateTime startDate = request.getStartDate() != null
+                    ? DateUtils.parseLocalDateTime(request.getStartDate())
+                    : null;
+
+            LocalDateTime endDate = request.getEndDate() != null
+                    ? DateUtils.parseLocalDateTime(request.getEndDate())
+                    : null;
+
+            UUID patientId = request.getPatientId() != null && !request.getPatientId().isBlank()
+                    ? UUID.fromString(request.getPatientId())
+                    : null;
+
+            UUID doctorId = request.getDoctorId() != null && !request.getDoctorId().isBlank()
+                    ? UUID.fromString(request.getDoctorId())
+                    : null;
+
+            String status = request.getStatus();
+            String testType = request.getTestType();
+            String orderCode = request.getOrderCode();
+
+            List<LabTestOrder> orders = labTestOrderRepository.searchLabTestOrders(
+                    startDate,
+                    endDate,
+                    patientId,
+                    doctorId,
+                    status,
+                    testType,
+                    orderCode
+            );
+
+            List<LabTestOrderResponse> dtos = orders.stream()
+                    .map(order -> {
+                        MedicalRecord mr = order.getMedicalRecord();
+                        return buildResponseDto(order, mr, null);
+                    })
+                    .toList();
+
+            log.info("Search LabTestOrders found {} results in {} ms",
+                    dtos.size(), System.currentTimeMillis() - beginTime);
+
+            return ResponseUtils.buildSuccessRes(
+                    new BaseResponseList(dtos, dtos.size()),
+                    "Search LabTestOrders Successfully"
+            );
+
+        } catch (Exception e) {
+            log.error("Error while searching LabTestOrders", e);
+            return new BaseResponse(
+                    500,
+                    null,
+                    SYSTEM_ERROR,
+                    FAILED,
+                    1,
+                    OPERATION_FAILED,
+                    DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT),
+                    null
+            );
+        }
+    }
+
     private LabTestOrderResponse buildResponseDto(LabTestOrder order,
                                                   MedicalRecord medicalRecord,
                                                   Integer totalTests) {
+
         UUID appointmentId = null;
+        UUID patientId = null;
         String patientName = null;
+        UUID doctorId = null;
         String doctorName = null;
 
         if (medicalRecord != null && medicalRecord.getAppointment() != null) {
-            appointmentId = medicalRecord.getAppointment().getId();
+            var appointment = medicalRecord.getAppointment();
+            appointmentId = appointment.getId();
 
-            if (medicalRecord.getAppointment().getPatient() != null) {
-                var p = medicalRecord.getAppointment().getPatient();
+            if (appointment.getPatient() != null) {
+                var p = appointment.getPatient();
+                patientId = p.getId();
                 patientName = (p.getFirstName() != null ? p.getFirstName() : "") + " " +
                         (p.getLastName() != null ? p.getLastName() : "");
             }
 
-            if (medicalRecord.getAppointment().getStaff() != null &&
-                    medicalRecord.getAppointment().getStaff().getUser() != null) {
-                doctorName = medicalRecord.getAppointment().getStaff().getUser().getUsername();
+            if (appointment.getStaff() != null) {
+                var s = appointment.getStaff();
+                doctorId = s.getId();
+
+                String firstName = s.getFirstName();
+                String lastName = s.getLastName();
+                if (firstName != null || lastName != null) {
+                    doctorName = (firstName != null ? firstName : "") + " " +
+                            (lastName != null ? lastName : "");
+                } else if (s.getUser() != null) {
+                    doctorName = s.getUser().getUsername();
+                }
             }
         }
 
@@ -162,7 +254,9 @@ public class LabTestOrderService {
                 .testType(order.getTestType())
                 .medicalRecordId(medicalRecord != null ? medicalRecord.getId() : null)
                 .appointmentId(appointmentId)
+                .patientId(patientId)
                 .patientName(patientName)
+                .doctorId(doctorId)
                 .doctorName(doctorName)
                 .totalTests(totalTests)
                 .createDate(order.getCreateDate())
