@@ -144,13 +144,12 @@ public class UserService {
     @Transactional
     public BaseResponse updateUserProfile(UserRequest request) {
         long begin = System.currentTimeMillis();
-
         try {
-            // 1) Tìm user
+            // find user
             User user = userRepository.findByUsername(request.getUsername())
                     .orElseThrow(() -> new BadRequestException("User not found"));
 
-            // 2) Update username + email nếu khác
+            // Update username
             if (request.getUsername() != null && !request.getUsername().equals(user.getUsername())) {
                 if (userRepository.existsByUsernameAndIdNot(request.getUsername(), request.getId())) {
                     throw new BadRequestException("Username already exists");
@@ -165,12 +164,12 @@ public class UserService {
                 user.setEmail(request.getEmail());
             }
 
-            // 3) Update password nếu có truyền
+            // Update password
             if (request.getPassword() != null && !request.getPassword().isBlank()) {
                 user.setPassword(passwordEncoder.encode(request.getPassword()));
             }
 
-            // 4) Update avatar
+            // Update avatar
             if (request.getAvatarFile() != null && !request.getAvatarFile().isEmpty()) {
                 String oldUrl = user.getAvatarUrl();
                 String oldPublicId = cloudinaryService.extractPublicIdFromUrl(oldUrl);
@@ -222,11 +221,10 @@ public class UserService {
                 if (request.getLastName() != null) pp.setLastName(request.getLastName());
                 if (request.getAddress() != null) pp.setAddress(request.getAddress());
                 if (request.getPhoneNumber() != null) pp.setPhoneNumber(request.getPhoneNumber());
-                // Nếu FE có gender thì thêm:
                 if (request.getGender() != null) pp.setGender(request.getGender());
             }
 
-            // 7) Save user
+            // Save user
             User saved = userRepository.save(user);
 
             log.info("End update User {} in {} ms", request.getId(), System.currentTimeMillis() - begin);

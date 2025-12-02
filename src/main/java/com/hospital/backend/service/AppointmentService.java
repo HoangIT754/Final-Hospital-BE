@@ -161,8 +161,6 @@ public class AppointmentService {
     }
 
     public BaseResponse searchAppointments(AppointmentSearchRequest request) {
-        long begin = System.currentTimeMillis();
-
         try {
             if (request.getStartDate() == null &&
                     request.getEndDate() == null &&
