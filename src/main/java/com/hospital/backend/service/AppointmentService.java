@@ -40,7 +40,8 @@ public class AppointmentService {
     private static final List<Appointment.AppointmentStatus> BLOCKING_STATUSES = Arrays.asList(
             Appointment.AppointmentStatus.PENDING,
             Appointment.AppointmentStatus.WAITING,
-            Appointment.AppointmentStatus.CONFIRMED
+            Appointment.AppointmentStatus.CONFIRMED,
+            Appointment.AppointmentStatus.REQUESTED
     );
 
     private final AppointmentRepository appointmentRepository;
@@ -96,12 +97,45 @@ public class AppointmentService {
     public BaseResponse createAppointment(AppointmentRequest request) {
         long beginTime = System.currentTimeMillis();
         try {
-            validateDoctorSchedule(
-                    request.getStaffId(),
-                    request.getAppointmentStartTime(),
-                    request.getAppointmentEndTime(),
-                    null
-            );
+
+            if (request.getStaffId() == null) {
+                throw new BadRequestException("Staff ID is required");
+            }
+            if (request.getPatientId() == null) {
+                throw new BadRequestException("Patient ID is required");
+            }
+            if (request.getAppointmentStartTime() == null ||
+                    request.getAppointmentEndTime() == null) {
+                throw new BadRequestException("Appointment start time and end time are required");
+            }
+            if (!request.getAppointmentEndTime().isAfter(request.getAppointmentStartTime())) {
+                throw new BadRequestException("Appointment end time must be after start time");
+            }
+
+            boolean hasConflict = appointmentRepository
+                    .existsByStaff_IdAndIsDeletedFalseAndStatusInAndAppointmentStartTimeLessThanAndAppointmentEndTimeGreaterThan(
+                            request.getStaffId(),
+                            BLOCKING_STATUSES,
+                            request.getAppointmentEndTime(),
+                            request.getAppointmentStartTime()
+                    );
+
+            if (hasConflict) {
+                String msg = "Doctor already has another appointment in this time range";
+                log.warn("Create appointment conflict: staffId={}, start={}, end={}",
+                        request.getStaffId(), request.getAppointmentStartTime(), request.getAppointmentEndTime());
+
+                return new BaseResponse(
+                        200,                // statusCode
+                        null,               // data
+                        msg,                // description
+                        FAILED,             // messageStatus (failed)
+                        1,                  // resultCode (tùy bạn quy ước)
+                        "APPOINTMENT_TIME_CONFLICT", // resultDescription / code nội bộ
+                        DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT),
+                        null                // took / hiddenDesc nếu bạn dùng
+                );
+            }
 
             Appointment appointment = new Appointment();
             mapToEntity(request, appointment);
@@ -124,6 +158,7 @@ public class AppointmentService {
             );
         }
     }
+
 
     /**
      * Update Appointment
@@ -362,7 +397,6 @@ public class AppointmentService {
             );
         }
     }
-
 
 
     /**
