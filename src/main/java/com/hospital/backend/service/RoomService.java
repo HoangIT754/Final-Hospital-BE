@@ -246,13 +246,13 @@ public class RoomService {
             room.setFloor(null);
         }
 
-        if (request.getAreaId() != null) {
-            Area area = areaRepository.findById(request.getAreaId())
-                    .orElseThrow(() -> new NotFoundException("Area not found"));
-            room.setRoomArea(area);
-        } else {
-            throw new BadRequestException("Area is required");
-        }
+//        if (request.getAreaId() != null) {
+//            Area area = areaRepository.findById(request.getAreaId())
+//                    .orElseThrow(() -> new NotFoundException("Area not found"));
+//            room.setRoomArea(area);
+//        } else {
+//            throw new BadRequestException("Area is required");
+//        }
     }
 
 

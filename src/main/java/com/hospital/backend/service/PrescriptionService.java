@@ -132,10 +132,14 @@ public class PrescriptionService {
                 prescriptions = prescriptionRepository.findAllByIsDeleted(request.getIsDeleted());
             }
 
+            List<PrescriptionResponse> dtoList = prescriptions.stream()
+                    .map(this::mapToResponse)
+                    .toList();
+
             log.info("End fetching prescriptions in {} ms", System.currentTimeMillis() - beginTime);
 
             return ResponseUtils.buildSuccessRes(
-                    new BaseResponseList(prescriptions, prescriptions.size()),
+                    new BaseResponseList(dtoList, dtoList.size()),
                     "Fetched Prescriptions Successfully"
             );
         } catch (Exception e) {
@@ -146,6 +150,7 @@ public class PrescriptionService {
             );
         }
     }
+
 
 
     @Transactional
@@ -267,7 +272,6 @@ public class PrescriptionService {
 
         String doctorFullName = null;
         if (staff != null && staff.getUser() != null) {
-            // Tuỳ bạn muốn lấy tên bác sĩ từ user hay staffProfile
             doctorFullName = staff.getUser().getUsername(); // hoặc firstName + lastName nếu có
         }
 

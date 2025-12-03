@@ -28,5 +28,5 @@ public class RoomRequest {
 
     private Boolean isActive = true;
 
-    private UUID areaId;
+//    private UUID areaId;
 }

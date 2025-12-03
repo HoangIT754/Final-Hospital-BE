@@ -4,6 +4,7 @@ import com.hospital.backend.dto.request.medicine.MedicineRequest;
 import com.hospital.backend.dto.request.medicine.MedicineSearchRequest;
 import com.hospital.backend.dto.response.BaseResponse;
 import com.hospital.backend.dto.response.BaseResponseList;
+import com.hospital.backend.dto.response.medicine.MedicineResponse;
 import com.hospital.backend.entity.Medicine;
 import com.hospital.backend.exception.BadRequestException;
 import com.hospital.backend.repository.MedicineRepository;
@@ -113,10 +114,15 @@ public class MedicineService {
         try {
             List<Medicine> medicines = medicineRepository.findAll();
 
+            // Map Entity -> DTO
+            List<MedicineResponse> responses = medicines.stream()
+                    .map(this::mapToResponse)
+                    .toList();
+
             log.info("End fetching medicines in {} ms", System.currentTimeMillis() - beginTime);
 
             return ResponseUtils.buildSuccessRes(
-                    new BaseResponseList(medicines, medicines.size()),
+                    new BaseResponseList(responses, responses.size()),
                     "Fetched Medicines Successfully"
             );
         } catch (Exception e) {
@@ -164,8 +170,12 @@ public class MedicineService {
                     isActive
             );
 
+            List<MedicineResponse> responses = medicines.stream()
+                    .map(this::mapToResponse)
+                    .toList();
+
             return ResponseUtils.buildSuccessRes(
-                    new BaseResponseList(medicines, medicines.size()),
+                    new BaseResponseList(responses, responses.size()),
                     "Fetched Medicines Successfully"
             );
         } catch (Exception e) {
@@ -175,5 +185,25 @@ public class MedicineService {
                     DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT), null
             );
         }
+    }
+
+    private MedicineResponse mapToResponse(Medicine m) {
+        if (m == null) return null;
+
+        return MedicineResponse.builder()
+                .id(m.getId())
+                .code(m.getCode())
+                .name(m.getName())
+                .description(m.getDescription())
+                .form(m.getForm())
+                .strength(m.getStrength())
+                .unit(m.getUnit())
+                .stock(m.getStock())
+                .price(m.getPrice())
+                .currency(m.getCurrency())
+                .manufacturer(m.getManufacturer())
+                .isActive(m.getIsActive())
+                .imageUrl(m.getImageUrl())
+                .build();
     }
 }
