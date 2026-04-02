@@ -126,14 +126,14 @@ public class AppointmentService {
                         request.getStaffId(), request.getAppointmentStartTime(), request.getAppointmentEndTime());
 
                 return new BaseResponse(
-                        200,                // statusCode
-                        null,               // data
-                        msg,                // description
-                        FAILED,             // messageStatus (failed)
-                        1,                  // resultCode (tùy bạn quy ước)
-                        "APPOINTMENT_TIME_CONFLICT", // resultDescription / code nội bộ
+                        200,
+                        null,
+                        msg,
+                        FAILED,
+                        1,
+                        "APPOINTMENT_TIME_CONFLICT",
                         DateUtils.formatDate(new Date(), DateUtils.CUSTOM_FORMAT),
-                        null                // took / hiddenDesc nếu bạn dùng
+                        null
                 );
             }
 

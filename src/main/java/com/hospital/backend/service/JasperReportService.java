@@ -15,6 +15,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -72,9 +73,10 @@ public class JasperReportService {
 
     // Set cứng thông tin template
     private TemplateConfig getTemplateConfig(String typeData) {
+        String fileName = "Patient_Report"+ getTimeStamp() +".pdf";
         switch (typeData) {
             case "QF_A.01":
-                return new TemplateConfig("Patient_Report.pdf", "Footer for Patient Report", true);
+                return new TemplateConfig(fileName, "Footer for Patient Report", true);
             case "QF_A.02":
                 return new TemplateConfig("Medical_Report.pdf", "Footer for Medical Report", true);
             case "QF_A.03":
@@ -82,6 +84,11 @@ public class JasperReportService {
             default:
                 return new TemplateConfig("General_Report.pdf", null, false);
         }
+    }
+
+    private String getTimeStamp(){
+        Timestamp currentTime = new Timestamp(System.currentTimeMillis());
+        return new SimpleDateFormat("dd-MM-yyyy HH-mm-ss").format(currentTime);
     }
 
     private Map<String, Object> getDefaultParameters(DataRequest request) {

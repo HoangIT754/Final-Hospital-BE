@@ -15,15 +15,15 @@ import java.util.UUID;
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, UUID> {
     @Query("""
-        SELECT a 
-        FROM Appointment a
-        WHERE a.isDeleted = false
-        AND (:patientId IS NULL OR a.patient.id = :patientId)
-        AND (:doctorId IS NULL OR a.staff.id = :doctorId)
-        AND (:status IS NULL OR a.status = :status)
-        AND (:startDate IS NULL OR :startDate = '' OR a.appointmentStartTime >= CAST(:startDate AS timestamp))
-        AND (:endDate IS NULL OR :endDate = '' OR a.appointmentEndTime >= CAST(:endDate AS timestamp))
-    """)
+                SELECT a
+                FROM Appointment a
+                WHERE a.isDeleted = false
+                  AND (:patientId IS NULL OR a.patient.id = :patientId)
+                  AND (:doctorId  IS NULL OR a.staff.id  = :doctorId)
+                  AND (:status    IS NULL OR a.status    = :status)
+                  AND (a.appointmentStartTime >= COALESCE(:startDate, a.appointmentStartTime))
+                  AND (a.appointmentEndTime   <= COALESCE(:endDate,   a.appointmentEndTime))
+            """)
     List<Appointment> searchAppointments(
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
@@ -31,6 +31,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
             @Param("doctorId") UUID doctorId,
             @Param("status") Appointment.AppointmentStatus status
     );
+
 
     @Query("""
                 SELECT DISTINCT a.patient, a.id as appointmentId

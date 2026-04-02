@@ -38,6 +38,6 @@ public abstract class AuditModel {
     @Column(name = "modified_date")
     LocalDateTime modifyDate;
 
-    @Column(name = "is_deleted")
-    Boolean isDeleted;
+    @Column(name="is_deleted", nullable=false)
+    private Boolean isDeleted = false;
 }
